@@ -31,18 +31,14 @@ void setup() {
   lsm.m_max = (LSM303::vector<int16_t>){  +534,   +182,   +538};
   
   //Try to init BLE
-  if (!ble.begin(true)){
-    Serial.println("Couldn't find Bluefruit, make sure it's in COM mode & check wiring?");
-  }
+  if (!ble.begin(true)) Serial.println("Couldn't find Bluefruit");
   
   //Try to init neopixels
   pixels.begin();
 
   //Perform a factory reset of BLE to make sure everything is in a known state
   Serial.println("Performing a factory reset: ");
-  if (! ble.factoryReset() ){
-       Serial.println("Couldn't factory reset");
-  }
+  if (!ble.factoryReset()) Serial.println("Couldn't factory reset");
 
   //Disable command echo from Bluefruit
   ble.echo(false);
@@ -57,7 +53,6 @@ void setPixel(uint16_t n, uint32_t colour){
     pixels.setPixelColor(n, colour);
     PixelArray[n] = colour;
     pixelChanged = true;
-    Serial.println("Pixel Changed");
   }
 }
 
@@ -83,12 +78,7 @@ void loop() {
       float diff = abs(head - angle); //Difference between this pixel and our heading
       //Calculate 0 <= brightness <= 1
       float brightness = (float)(90 - diff)/(float)90;
-      if (brightness < 0){
-        brightness = 0;
-      }
-      if (brightnesses[pixel%4] <= brightness){
-        brightnesses[pixel%4] = brightness;
-      }
+      if (brightnesses[pixel%4] <= brightness) brightnesses[pixel%4] = brightness;
     }
     for(int pixel = 0; pixel < 4; pixel++){ //Write out
       setPixel(pixel, pixels.Color(0,(int)(255*brightnesses[pixel]), 0));
@@ -98,18 +88,10 @@ void loop() {
   //Heel clicks
   if(lsm.a.x < 0 && lsm.a.z > -11000 && (millis() - schmittTimer) > 500){ //Significant 'outward' rotation, lifted off ground - yes, a gyroscope would be better
     if(mode == 0){ //Not active
-      if((millis() - schmittTimer) > 5000){ //5 second reset.
-        activate = 0;
-      }
-      /*if(activate == 2){ //This is the third time
-        mode = 1;
-        Serial.println("Active!");
-        activate = 0;
-      }*/
-      if(activate <= 3){
-        activate++;
-      }
-      for(int p = 0; p < activate; p++){
+      if((millis() - schmittTimer) > 5000) activate = 0; //5 second reset.
+      if(activate <= 3) activate++; //Increase heelclicks
+      
+      for(int p = 0; p < activate; p++){ //Write out
         setPixel(p, pixels.Color(255, 0, 0));
       }
     }else{ //Active
