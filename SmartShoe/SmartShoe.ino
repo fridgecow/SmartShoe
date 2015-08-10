@@ -6,7 +6,7 @@
 #include <Adafruit_BluefruitLE_UART.h>
 #include <Adafruit_NeoPixel.h>
 
-#define MODES 1
+#define MODES 2
 
 Adafruit_BluefruitLE_UART ble(Serial1, 12); //BLE module
 LSM303 lsm; //Accelerometer + Magnetometer
@@ -18,8 +18,9 @@ int activate = 0; //Number of 'heelclicks' registered.
 unsigned long schmittTimer = 0; //Prevents repeated heel clicks.
 uint32_t PixelArray[] = {0,0,0,0}; //Caches the current state so that a 'refresh' doesn't always happen
 bool pixelChanged = false; //Have the pixels *actually* been changed.
-
+float mouseOffset = 180;
 void setup() {
+  Mouse.begin();
   Serial.begin(115200);
   
   // Try to init the accelerometer
@@ -83,6 +84,11 @@ void loop() {
     for(int pixel = 0; pixel < 4; pixel++){ //Write out
       setPixel(pixel, pixels.Color(0,(int)(255*brightnesses[pixel]), 0));
     }
+  }else if(mode == 2){ //Mouse mode
+    if((millis() - schmittTimer) < 500) float mouseOffset = head;
+    //if(millis()%50 == 0){
+      Mouse.move(floor((head - mouseOffset)/80), 0, 0);
+    //}
   }
   
   //Heel clicks
