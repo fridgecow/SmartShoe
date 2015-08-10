@@ -19,6 +19,9 @@ unsigned long schmittTimer = 0; //Prevents repeated heel clicks.
 uint32_t PixelArray[] = {0,0,0,0}; //Caches the current state so that a 'refresh' doesn't always happen
 bool pixelChanged = false; //Have the pixels *actually* been changed.
 float mouseOffset = 180;
+//String serialString;
+float GPS[2];
+
 void setup() {
   Mouse.begin();
   Serial.begin(115200);
@@ -62,6 +65,29 @@ void loop() {
   float head = lsm.heading(); //Get heading from magnetometer
   //ble.print("\n");
   
+  String bleString = "";
+  while(Serial.available() > 0){ //Check for incoming data - to be replaced with BLE.
+    bleString += (char)Serial.read();
+  }
+  if(bleString != ""){ //Parse incoming data
+    Serial.println("Recieved: " + bleString);
+    String commandStr = bleString.substring(0,3);
+    if(commandStr == "GPS"){ //Deal with GPS data
+      GPS[0] = bleString.substring(3,12).toFloat();
+      GPS[1] = bleString.substring(13,21).toFloat();
+      //Serial.print(GPS[0],6); Serial.print(" "); Serial.println(GPS[1],6);
+    }else if(commandStr == "NOT"){ //Deal with notification
+      Serial.println("Flashing");
+      for(int i = 0; i<3; i++){
+        for(int p=0; p<4; p++){
+          pixels.setPixelColor(p, pixels.Color(255,255,255));
+          delay(500);
+          pixels.setPixelColor(p, pixels.Color(0,0,0));
+          delay(500);
+        }
+      }
+    }
+  }
   
   if(mode == 0 && (millis() - schmittTimer) > 500){ //Not active - clear screen
     for(int pixel = 0; pixel < 4; pixel++){
