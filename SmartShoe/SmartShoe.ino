@@ -28,8 +28,7 @@ void setup() {
   
   //Default calibration values
   lsm.m_min = (LSM303::vector<int16_t>){  -492,   -947,   -402};
-  lsm.m_max = (LSM303::vector<int16_t>){  +534,   +182,   +538}
-;
+  lsm.m_max = (LSM303::vector<int16_t>){  +534,   +182,   +538};
   
   //Try to init BLE
   if (!ble.begin(true)){
@@ -39,13 +38,13 @@ void setup() {
   //Try to init neopixels
   pixels.begin();
 
-  /* Perform a factory reset of BLE to make sure everything is in a known state */
-  Serial.println(F("Performing a factory reset: "));
+  //Perform a factory reset of BLE to make sure everything is in a known state
+  Serial.println("Performing a factory reset: ");
   if (! ble.factoryReset() ){
-       Serial.println(F("Couldn't factory reset"));
+       Serial.println("Couldn't factory reset");
   }
 
-  /* Disable command echo from Bluefruit */
+  //Disable command echo from Bluefruit
   ble.echo(false);
   
   Serial.println("OK!, hardware ready!");
@@ -67,21 +66,32 @@ void loop() {
   float head = lsm.heading(); //Get heading from magnetometer
   //ble.print("\n");
   
-  //Compass functionality
+  
   if(mode == 0 && (millis() - schmittTimer) > 500){ //Not active - clear screen
     for(int pixel = 0; pixel < 4; pixel++){
       setPixel(pixel, pixels.Color(0,0,0));
     }
-  }else if(mode == 1){
-    for(int pixel = 0; pixel < 4; pixel++){ //Loop through all pixels
-      float angle = (3 - pixel)*90; //Angle of this pixel - reversed as the pixels were wired ccw.
+    if(activate > 2){ //3 heel clicks (or more!)
+      mode = 1;
+      activate = 0;
+      Serial.println("Active!");
+    }
+  }else if(mode == 1){ //Compass functionality
+    float brightnesses[] = {0, 0, 0, 0};
+    for(int pixel = 0; pixel <= 4; pixel++){ //Loop through all pixels - First one twice, once as 0 and then as 360
+      float angle = (4 - pixel)*90; //Angle of this pixel - reversed as the pixels were wired ccw.
       float diff = abs(head - angle); //Difference between this pixel and our heading
       //Calculate 0 <= brightness <= 1
       float brightness = (float)(90 - diff)/(float)90;
       if (brightness < 0){
         brightness = 0;
       }
-      setPixel(pixel, pixels.Color(0,(int)(255*brightness), 0));
+      if (brightnesses[pixel%4] <= brightness){
+        brightnesses[pixel%4] = brightness;
+      }
+    }
+    for(int pixel = 0; pixel < 4; pixel++){ //Write out
+      setPixel(pixel, pixels.Color(0,(int)(255*brightnesses[pixel]), 0));
     }
   }
   
@@ -91,12 +101,14 @@ void loop() {
       if((millis() - schmittTimer) > 5000){ //5 second reset.
         activate = 0;
       }
-      if(activate == 2){ //This is the third time
+      /*if(activate == 2){ //This is the third time
         mode = 1;
         Serial.println("Active!");
         activate = 0;
+      }*/
+      if(activate <= 3){
+        activate++;
       }
-      activate++;
       for(int p = 0; p < activate; p++){
         setPixel(p, pixels.Color(255, 0, 0));
       }
