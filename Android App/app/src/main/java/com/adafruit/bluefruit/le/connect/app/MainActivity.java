@@ -492,7 +492,11 @@ public class MainActivity extends ActionBarActivity implements BleManager.BleMan
             BluetoothDevice device = mSelectedDeviceData.device;
 
             if (mSelectedDeviceData.type == BluetoothDeviceData.kType_Uart) {      // if is uart, show all the available activities
-                showChooseDeviceServiceDialog(device);
+                //showChooseDeviceServiceDialog(device);
+
+                //Go straight to controller activity.
+                mComponentToStartWhenConnected = ControllerActivity.class;
+                connect(device);
             } else {                          // if no uart, then go directly to info
                 Log.d(TAG, "No UART service found. Go to InfoActivity");
                 mComponentToStartWhenConnected = InfoActivity.class;

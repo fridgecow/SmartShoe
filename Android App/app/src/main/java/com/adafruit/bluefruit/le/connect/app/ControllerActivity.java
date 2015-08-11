@@ -96,7 +96,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
         setContentView(R.layout.activity_controller);
 
         mBleManager = BleManager.getInstance(this);
-        restoreRetainedDataFragment();
+        restoreRetainedDataFragment(); //THIS IS KEY! INITS THE SENSOR ARRAY.
 
         // UI
         mControllerListView = (ExpandableHeightExpandableListView) findViewById(R.id.controllerListView);
@@ -155,7 +155,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     }
 
     @Override
-    public void onResume() { //This is called every time 
+    public void onResume() { //This is called every time app starts.
         super.onResume();
 
         int resultCode = GooglePlayServicesUtil.isGooglePlayServicesAvailable(this);
@@ -517,7 +517,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
 
 
     // region ExpandableListAdapter
-    private class SensorData {
+    private class SensorData { //This is the data type for SensorData.
         public int sensorType;
         public float[] values;
         public boolean enabled;
@@ -578,6 +578,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
 
         @Override
         public View getGroupView(int groupPosition, boolean isExpanded, View convertView, ViewGroup parent) {
+            //Populates the menu
             if (convertView == null) {
                 convertView = mActivity.getLayoutInflater().inflate(R.layout.layout_controller_streamitem_title, parent, false);
             }
@@ -676,9 +677,10 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
             for (int i = 0; i < kNumSensorTypes; i++) {
                 SensorData sensorData = new SensorData();
                 sensorData.sensorType = i;
-                sensorData.enabled = true; //was false - now true.
+                sensorData.enabled = false; //Sensors off by default.
                 mSensorData[i] = sensorData;
             }
+            mSensorData[4].enabled = true; //Enable location.
 
         } else {
             // Restore status
