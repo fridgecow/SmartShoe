@@ -20,7 +20,10 @@ uint32_t PixelArray[] = {0,0,0,0}; //Caches the current state so that a 'refresh
 bool pixelChanged = false; //Have the pixels *actually* been changed.
 float mouseOffset = 180;
 //String serialString;
-float GPS[2];
+uint8_t bleString[21];
+uint16_t bleIndex = 0;
+
+float GPS[3];
 
 void setup() {
   Mouse.begin();
@@ -60,33 +63,37 @@ void setPixel(uint16_t n, uint32_t colour){
   }
 }
 
+float parsefloat(uint8_t *buffer) {
+  float f = ((float *)buffer)[0];
+  return f;
+}
+
 void loop() {
   lsm.read();
   float head = lsm.heading(); //Get heading from magnetometer
   //ble.print("\n");
   
-  String bleString = "";
-  while(Serial.available() > 0){ //Check for incoming data - to be replaced with BLE.
-    bleString += (char)Serial.read();
+  while(ble.available() > 0){ //Check for incoming BLE data
+     char c = (char)ble.read();
+     if (c == '!'){ //New command
+       bleIndex = 0;
+     }
+     bleString[bleIndex] = c;
+     bleIndex++;
   }
-  if(bleString != ""){ //Parse incoming data
-    Serial.println("Recieved: " + bleString);
-    String commandStr = bleString.substring(0,3);
-    if(commandStr == "GPS"){ //Deal with GPS data
-      GPS[0] = bleString.substring(3,12).toFloat();
-      GPS[1] = bleString.substring(13,21).toFloat();
-      //Serial.print(GPS[0],6); Serial.print(" "); Serial.println(GPS[1],6);
-    }else if(commandStr == "NOT"){ //Deal with notification
-      Serial.println("Flashing");
-      for(int i = 0; i<3; i++){
-        for(int p=0; p<4; p++){
-          pixels.setPixelColor(p, pixels.Color(255,255,255));
-          delay(500);
-          pixels.setPixelColor(p, pixels.Color(0,0,0));
-          delay(500);
-        }
-      }
-    }
+  if(bleString[1] == 'L' && bleIndex == 15){ //Parse GPS data
+    GPS[0] = parsefloat(bleString+2);
+    GPS[1] = parsefloat(bleString+6);
+    GPS[2] = parsefloat(bleString+10);
+    
+    /*Serial.print("GPS Location\t");
+    Serial.print("Lat: "); Serial.print(GPS[0], 4);
+    Serial.print('\t');
+    Serial.print("Lon: "); Serial.print(GPS[1], 4);
+    Serial.print('\t');
+    Serial.print(GPS[2], 4); Serial.println(" meters");*/
+    
+    bleIndex = 0; //Reset ble.
   }
   
   if(mode == 0 && (millis() - schmittTimer) > 500){ //Not active - clear screen
