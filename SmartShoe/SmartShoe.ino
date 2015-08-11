@@ -53,7 +53,7 @@ void setup() {
   Serial.println("OK!, hardware ready!");
 }
 
-void setPixel(uint16_t n, uint32_t colour){
+void setPixel(uint16_t n, uint32_t colour){ //Buffers and caches pixel changes
   if(PixelArray[n] == colour){ //No change
     return;
   }else{ //Change
@@ -63,9 +63,42 @@ void setPixel(uint16_t n, uint32_t colour){
   }
 }
 
-float parsefloat(uint8_t *buffer) {
+float parsefloat(uint8_t *buffer) { //Creates float from 4 memory locations
   float f = ((float *)buffer)[0];
   return f;
+}
+
+int calcBearing(float flat1, float flon1, float flat2, float flon2){ 
+  //Calculates a bearing from 2 GPS coordinates
+  float calc;
+  float bear_calc;
+
+  float x = 69.1 * (flat2 - flat1); 
+  float y = 69.1 * (flon2 - flon1) * cos(flat1/57.3);
+
+  calc=atan2(y,x);
+
+  bear_calc= degrees(calc);
+
+  if(bear_calc<=1)
+    bear_calc=360+bear_calc; 
+
+  return bear_calc;
+}
+
+void pointDir(float head, int target){ //Outputs a compass/GPS heading.
+    float brightnesses[] = {0, 0, 0, 0};
+    for(int pixel = 0; pixel <= 4; pixel++){ //Loop through all pixels - First one twice, once as 0 and then as 360
+      //Angle of this pixel - reversed and -90 as the pixels were wired ccw, and adjusted for target bearing.
+      float angle = ((4 - pixel)*90 + target - 90)%360;
+      float diff = abs(head - angle); //Difference between this pixel and our heading
+      //Calculate 0 <= brightness <= 1
+      float brightness = (float)(90 - diff)/(float)90;
+      if (brightnesses[pixel%4] <= brightness) brightnesses[pixel%4] = brightness;
+    }
+    for(int pixel = 0; pixel < 4; pixel++){ //Write out
+      setPixel(pixel, pixels.Color(0,(int)(255*brightnesses[pixel]), 0));
+    }
 }
 
 void loop() {
@@ -105,23 +138,21 @@ void loop() {
       activate = 0;
       Serial.println("Active!");
     }
-  }else if(mode == 1){ //Compass functionality
-    float brightnesses[] = {0, 0, 0, 0};
-    for(int pixel = 0; pixel <= 4; pixel++){ //Loop through all pixels - First one twice, once as 0 and then as 360
-      float angle = (4 - pixel)*90; //Angle of this pixel - reversed as the pixels were wired ccw.
-      float diff = abs(head - angle); //Difference between this pixel and our heading
-      //Calculate 0 <= brightness <= 1
-      float brightness = (float)(90 - diff)/(float)90;
-      if (brightnesses[pixel%4] <= brightness) brightnesses[pixel%4] = brightness;
+  }else if(mode == 1){ //GPS functionality
+    if(GPS[0] == 0 && GPS[1] == 0){ //No fix (yet)
+      for(int p = 0; p<4; p++){
+        setPixel(p, pixels.Color(255,0,255));//Purple
+      }
+    }else{ //Fix
+      int bearing = calcBearing(GPS[0], GPS[1], 53.376518, -1.494527);
+      Serial.print("Bearing: "); Serial.println(bearing);
+      pointDir(head, bearing);
     }
-    for(int pixel = 0; pixel < 4; pixel++){ //Write out
-      setPixel(pixel, pixels.Color(0,(int)(255*brightnesses[pixel]), 0));
-    }
-  }else if(mode == 2){ //Mouse mode
+  }else if(mode == 2){ //Compass functionality
+    pointDir(head, 0);
+  }else if(mode == 3){ //Mouse mode
     if((millis() - schmittTimer) < 500) float mouseOffset = head;
-    //if(millis()%50 == 0){
-      Mouse.move(floor((head - mouseOffset)/80), 0, 0);
-    //}
+    Mouse.move(floor((head - mouseOffset)/80), 0, 0);
   }
   
   //Heel clicks
