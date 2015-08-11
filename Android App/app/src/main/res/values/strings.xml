@@ -132,12 +132,12 @@
         <item>Gyro</item>
         <item>Magnetometer</item>
         <item>Location</item>
-        <item>Magnetometer</item>
+        <item>Time</item>
     </string-array>
 
     <string-array name="controller_interface_items">
         <item>Color Picker</item>
-        <item>Control Pad</item>
+        <item>Destination Picker</item>
     </string-array>
 
     <!-- Pad Activity -->
