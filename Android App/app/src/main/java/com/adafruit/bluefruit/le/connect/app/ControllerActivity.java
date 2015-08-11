@@ -9,6 +9,7 @@ import android.bluetooth.BluetoothGattCharacteristic;
 import android.bluetooth.BluetoothGattDescriptor;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
 import android.content.SharedPreferences;
 import android.hardware.Sensor;
 import android.hardware.SensorEvent;
@@ -96,7 +97,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     private float[] mQuaternion = new float[4];
 
     private DataFragment mRetainedDataFragment;
-
+    private NotificationReceiver nReceiver;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -105,6 +106,12 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
 
         mBleManager = BleManager.getInstance(this);
         restoreRetainedDataFragment(); //THIS IS KEY! INITS THE SENSOR ARRAY.
+
+        //Init notification things
+        nReceiver = new NotificationReceiver();
+        IntentFilter filter = new IntentFilter("com.adafruit.bluefruit.le.connect.app.NOTIFICATION_LISTENER_EXAMPLE");
+        //filter.addAction("com.adafruit.bluefruit.le.connect.app.NOTIFICATION_LISTENER_EXAMPLE");
+        registerReceiver(nReceiver,filter);
 
         // UI
         mControllerListView = (ExpandableHeightExpandableListView) findViewById(R.id.controllerListView);
@@ -121,8 +128,13 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (position == 0) {
-                    Intent intent = new Intent(ControllerActivity.this, ColorPickerActivity.class);
-                    startActivityForResult(intent, 0);
+
+                    Intent i = new Intent("com.adafruit.bluefruit.le.connect.app.NOTIFICATION_LISTENER_SERVICE_EXAMPLE");
+                    i.putExtra("command","list");
+                    sendBroadcast(i);
+                    Log.d(TAG, "Sent list command");
+                    /*Intent intent = new Intent(ControllerActivity.this, ColorPickerActivity.class);
+                    startActivityForResult(intent, 0);*/
                 } else { //Destination picker
                     int PLACE_PICKER_REQUEST = 1;
                     PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
@@ -711,12 +723,14 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     // endregion
 
 
-    public class NotificationReceiver extends BroadcastReceiver {
+    class NotificationReceiver extends BroadcastReceiver {
 
         @Override
         public void onReceive(Context context, Intent intent) {
+            Log.d(TAG, "Received notificationEvent");
             TextView txtView = (TextView) findViewById(R.id.textView);
             String temp = intent.getStringExtra("notification_event") + "\n";
+            Log.d(TAG, temp);
             txtView.setText(temp);
         }
     }
