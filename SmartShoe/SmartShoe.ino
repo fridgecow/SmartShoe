@@ -6,7 +6,7 @@
 #include <Adafruit_BluefruitLE_UART.h>
 #include <Adafruit_NeoPixel.h>
 
-#define MODES 2
+#define MODES 4
 
 Adafruit_BluefruitLE_UART ble(Serial1, 12); //BLE module
 LSM303 lsm; //Accelerometer + Magnetometer
@@ -24,7 +24,7 @@ uint8_t bleString[21];
 uint16_t bleIndex = 0;
 
 float GPS[3];
-float TIME[2];
+int TIME[2];
 
 void setup() {
   Mouse.begin();
@@ -160,7 +160,11 @@ void loop() {
     }
   }else if(mode == 2){ //Compass functionality
     pointDir(head, 0);
-  }else if(mode == 3){ //Mouse mode
+  }else if(mode == 3){ //Time
+    for(int p = 0; p<4; p++){
+      setPixel(p, pixels.Color(0, 255*bitRead(TIME[0], p), 255*bitRead(round((float)TIME[1]/(float)5), p)));
+    }
+  }else if(mode == 4){ //Mouse mode
     if((millis() - schmittTimer) < 500) float mouseOffset = head;
     Mouse.move(floor((head - mouseOffset)/80), 0, 0);
   }

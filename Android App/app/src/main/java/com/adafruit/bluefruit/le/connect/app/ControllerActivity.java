@@ -92,6 +92,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     private Sensor mGyroscope;
     private Sensor mMagnetometer;
     private Sensor mTime;
+    private Calendar mCal = Calendar.getInstance();
 
     private float[] mRotation = new float[9];
     private float[] mOrientation = new float[3];
@@ -231,11 +232,11 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
             final String[] prefixes = {"!Q", "!A", "!G", "!M", "!L", "!T", "!N"};     // same order that kSensorType
 
             //Update time
-            mSensorData[kSensorType_Time].values = new float[]{Calendar.HOUR, Calendar.MINUTE};
+            mSensorData[kSensorType_Time].values = new float[]{mCal.get(Calendar.HOUR), mCal.get(Calendar.MINUTE)};
 
             //Update notifications
             mSensorData[kSensorType_Notify].values = new float[]{ NotificationReceived ? 1 : 0 };
-            NotificationReceived = false;
+            //NotificationReceived = false;
 
             for (int i = 0; i < mSensorData.length; i++) {
                 SensorData sensorData = mSensorData[i];
