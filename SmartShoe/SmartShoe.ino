@@ -187,6 +187,7 @@ void loop() {
     }
     schmittTimer = millis(); //Reset timer
     Serial.println("Heel Click!");
+    ble.println("Heel Click Over BLE!");
   }
   //Output
   if(pixelChanged){

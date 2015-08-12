@@ -29,11 +29,14 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.adafruit.bluefruit.le.connect.R;
 import com.adafruit.bluefruit.le.connect.app.settings.ConnectedSettingsActivity;
+import com.adafruit.bluefruit.le.connect.app.settings.MqttUartSettingsActivity;
 import com.adafruit.bluefruit.le.connect.ble.BleManager;
+import com.adafruit.bluefruit.le.connect.mqtt.MqttSettings;
 import com.adafruit.bluefruit.le.connect.ui.utils.ExpandableHeightExpandableListView;
 import com.adafruit.bluefruit.le.connect.ui.utils.ExpandableHeightListView;
 import com.google.android.gms.common.ConnectionResult;
@@ -47,6 +50,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.ui.PlacePicker;
 
 import java.nio.ByteBuffer;
+import java.nio.charset.Charset;
 import java.util.Calendar;
 
 import android.content.BroadcastReceiver;
@@ -203,6 +207,9 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
         // Setup listeners
         mBleManager.setBleListener(this);
 
+        //mMqttManager.setListener(this);
+        //updateMqttStatus();
+
         registerEnabledSensorListeners(true);
 
         // Setup send data task
@@ -235,8 +242,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
             mSensorData[kSensorType_Time].values = new float[]{mCal.get(Calendar.HOUR), mCal.get(Calendar.MINUTE)};
 
             //Update notifications
-            mSensorData[kSensorType_Notify].values = new float[]{ NotificationReceived ? 1 : 0 };
-            //NotificationReceived = false;
+            mSensorData[kSensorType_Notify].values = NotificationReceived ? new float[]{ 1 } : null; //Only send on new notification.
 
             for (int i = 0; i < mSensorData.length; i++) {
                 SensorData sensorData = mSensorData[i];
@@ -488,9 +494,14 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     @Override
     public void onServicesDiscovered() {
         mUartService = mBleManager.getGattService(UUID_SERVICE);
-    }
 
-    @Override
+        mBleManager.enableNotification(mUartService, UUID_RX, true);
+    }
+    /*public void onServicesDiscovered() {
+        //mUartService = mBleManager.getGattService(UUID_SERVICE);
+    }*/
+
+    /*@Override
     public void onDataAvailable(BluetoothGattCharacteristic characteristic) {
 
     }
@@ -498,7 +509,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     @Override
     public void onDataAvailable(BluetoothGattDescriptor descriptor) {
 
-    }
+    }*/
 
     @Override
     public void onReadRemoteRssi(int rssi) {
@@ -730,7 +741,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     }
     // endregion
 
-
+    //Notification reciever.
     class NotificationReceiver extends BroadcastReceiver {
 
         @Override
@@ -745,5 +756,33 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                 NotificationReceived = true;
             }
         }
+    }
+
+    @Override
+    public void onDataAvailable(BluetoothGattCharacteristic characteristic) { //Receives over BLE. Requires extra work in onServicesDiscovered();
+        // UART RX
+        Log.d(TAG, "Received Data");
+        if (characteristic.getService().getUuid().toString().equalsIgnoreCase(UUID_SERVICE)) {
+            if (characteristic.getUuid().toString().equalsIgnoreCase(UUID_RX)) {
+                final String data = new String(characteristic.getValue(), Charset.forName("UTF-8"));
+
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        Log.d(TAG, "Running in UI thread: '"+data+"'");
+                        if (data.trim().equalsIgnoreCase("Heel Click Over BLE!") || data.trim().equalsIgnoreCase("Heel Click Over BLE!") == "!Nack") {
+                            //Notification was received - stop sending it.
+                            NotificationReceived = false;
+                            Log.d(TAG, "Cleared notification");
+                        }
+                    }
+                });
+            }
+        }
+    }
+
+    @Override
+    public void onDataAvailable(BluetoothGattDescriptor descriptor) {
+
     }
 }
