@@ -72,7 +72,8 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     private static final int kSensorType_Magnetometer = 3;
     private static final int kSensorType_Location = 4;
     private static final int kSensorType_Time = 5;
-    private static final int kNumSensorTypes = 6;
+    private static final int kSensorType_Notify = 6;
+    private static final int kNumSensorTypes = 7;
 
     // UI
     private ExpandableHeightExpandableListView mControllerListView;
@@ -98,6 +99,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
 
     private DataFragment mRetainedDataFragment;
     private NotificationReceiver nReceiver;
+    private boolean NotificationReceived = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -226,10 +228,14 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     private Runnable mPeriodicallySendData = new Runnable() {
         @Override
         public void run() { //Runs in a seperate thread, sends data.
-            final String[] prefixes = {"!Q", "!A", "!G", "!M", "!L", "!T"};     // same order that kSensorType
+            final String[] prefixes = {"!Q", "!A", "!G", "!M", "!L", "!T", "!N"};     // same order that kSensorType
 
             //Update time
-            mSensorData[kSensorType_Time].values = new float[]{(float) (Calendar.HOUR * 100), (float) (Calendar.MINUTE)};
+            mSensorData[kSensorType_Time].values = new float[]{Calendar.HOUR, Calendar.MINUTE};
+
+            //Update notifications
+            mSensorData[kSensorType_Notify].values = new float[]{ NotificationReceived ? 1 : 0 };
+            NotificationReceived = false;
 
             for (int i = 0; i < mSensorData.length; i++) {
                 SensorData sensorData = mSensorData[i];
@@ -710,6 +716,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
             }
             mSensorData[4].enabled = true; //Enable location by default.
             mSensorData[5].enabled = true; //Enable clock by default.
+            mSensorData[6].enabled = true; //Enable notifications by default.
 
         } else {
             // Restore status
@@ -732,6 +739,10 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
             String temp = intent.getStringExtra("notification_event") + "\n";
             Log.d(TAG, temp);
             txtView.setText(temp);
+
+            if(temp.indexOf("onNotificationPosted :") == 0) { //New notification
+                NotificationReceived = true;
+            }
         }
     }
 }

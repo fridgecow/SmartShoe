@@ -2,8 +2,8 @@
 <resources>
 
     <!-- General -->
-    <string name="app_name">Bluefruit LE</string>
-    <string name="app_full_name">Bluefruit LE Connect</string>
+    <string name="app_name">SmartShoe</string>
+    <string name="app_full_name">SmartShoe Connector</string>
     <string name="action_info">Info</string>
     <string name="action_mqttsettings">MQTT</string>
     <string name="action_settings">Settings</string>
@@ -118,9 +118,9 @@
     <string name="pinio_help_title">Pin I/O Help</string>
 
     <!-- Controller Activity -->
-    <string name="title_activity_controller">Controller</string>
-    <string name="controller_uartwarning">Please ensure that your Bluefruit LE module is set to DATA/UART mode when using this application</string>
-    <string name="controller_sectiontitle_stream">Stream Sensor Data</string>
+    <string name="title_activity_controller">Settings</string>
+    <string name="controller_uartwarning">Application must be left open for data to be sent.</string>
+    <string name="controller_sectiontitle_stream">Data to Stream</string>
     <string name="controller_sectiontitle_interface">Interface</string>
     <string name="controller_help_title">Controller Help</string>
     <string name="controller_location_unknown">Waiting for location data...</string>
@@ -133,6 +133,7 @@
         <item>Magnetometer</item>
         <item>Location</item>
         <item>Time</item>
+        <item>Notifications</item>
     </string-array>
 
     <string-array name="controller_interface_items">
