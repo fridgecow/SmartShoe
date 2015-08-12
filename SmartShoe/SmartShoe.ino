@@ -24,6 +24,7 @@ uint8_t bleString[21];
 uint16_t bleIndex = 0;
 
 float GPS[3];
+float TIME[2];
 
 void setup() {
   Mouse.begin();
@@ -127,6 +128,15 @@ void loop() {
     Serial.print(GPS[2], 4); Serial.println(" meters");*/
     
     bleIndex = 0; //Reset ble.
+  }else if(bleString[1] == 'T' && bleIndex == 11){ //Parse time
+    TIME[0] = parsefloat(bleString+2);
+    TIME[1] = parsefloat(bleString+6);
+    bleIndex = 0;
+    
+    Serial.print("TIME: "); Serial.print(TIME[0]); Serial.print(":"); Serial.println(TIME[1]);
+  }else if(bleString[1] == 'N' && bleIndex == 7){ //Parse notifications
+    Serial.println(parsefloat(bleString+2));
+    bleIndex = 0;
   }
   
   if(mode == 0 && (millis() - schmittTimer) > 500){ //Not active - clear screen
