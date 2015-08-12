@@ -46,16 +46,21 @@ void setup() {
   pixels.begin();
 
   //Perform a factory reset of BLE to make sure everything is in a known state
-  Serial.println("Performing a factory reset: ");
-  if (!ble.factoryReset()) Serial.println("Couldn't factory reset");
+  //Serial.println("Performing a factory reset: ");
+  //if (!ble.factoryReset()) Serial.println("Couldn't factory reset");
 
   //Disable command echo from Bluefruit
   ble.echo(false);
+  
+  //Change name
+  if (!ble.sendCommandCheckOK(F("AT+GAPDEVNAME=Tom's SmartShoe"))) Serial.println("Could not set device name?");
   
   Serial.println("OK!, hardware ready!");
 }
 
 void setPixel(uint16_t n, uint32_t colour){ //Buffers and caches pixel changes
+  //ble.info();
+  
   if(PixelArray[n] == colour){ //No change
     return;
   }else{ //Change
@@ -141,8 +146,6 @@ void loop() {
     ble.print("!Nack");
     //Issue a white 'flare' on the LEDs
     for(int p = 0; p<4; p++){
-      Serial.print("Flaring");
-      
       if(p>0) pixels.setPixelColor(p-1, pixels.Color(0,0,0));
       pixels.setPixelColor(p, pixels.Color(255, 255, 255));
       pixels.show();
@@ -150,6 +153,7 @@ void loop() {
       
       ble.print("!Nack");
     }
+    pixelChanged = true;
     bleIndex = 0;
   }
   
@@ -175,9 +179,8 @@ void loop() {
   }else if(mode == 2){ //Compass functionality
     pointDir(head, 0);
   }else if(mode == 3){ //Time
-    Serial.println(round((float)TIME[1]/(float)5));
     for(int p = 0; p<4; p++){
-      setPixel(p, pixels.Color(0, 255*bitRead(TIME[0], p), 255*bitRead(round((float)TIME[1]/(float)5), p)));
+      setPixel(p, pixels.Color(255*bitRead(round((float)TIME[1]/(float)5), p), 255*bitRead(TIME[0], p), 0));
     }
   }else if(mode == 4){ //Mouse mode
     if((millis() - schmittTimer) < 500) float mouseOffset = head;
@@ -205,7 +208,7 @@ void loop() {
     ble.println("Heel Click Over BLE!");
   }
   //Output
-  if(pixelChanged || millis() - refreshTimer > 5000){ //Only update if changed, or give a refresh every so often.
+  if(pixelChanged || millis() - refreshTimer > 1000){ //Only update if changed, or give a refresh every so often.
     refreshTimer = millis();
     pixels.show();
     pixelChanged = false;

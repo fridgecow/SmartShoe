@@ -29,6 +29,7 @@ import android.widget.AdapterView;
 import android.widget.ArrayAdapter;
 import android.widget.BaseExpandableListAdapter;
 import android.widget.TextView;
+import android.widget.Toast;
 import android.widget.ToggleButton;
 
 import com.smartshoe.connect.R;
@@ -747,10 +748,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
         @Override
         public void onReceive(Context context, Intent intent) {
             Log.d(TAG, "Received notificationEvent");
-            TextView txtView = (TextView) findViewById(R.id.textView);
             String temp = intent.getStringExtra("notification_event") + "\n";
-            Log.d(TAG, temp);
-            txtView.setText(temp);
 
             if(temp.indexOf("onNotificationPosted :") == 0) { //New notification
                 NotificationReceived = true;
@@ -774,6 +772,8 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                             //Notification was received - stop sending it.
                             NotificationReceived = false;
                             Log.d(TAG, "Cleared notification");
+                        }else{
+                            Toast.makeText(getApplicationContext(), data, Toast.LENGTH_SHORT)
                         }
                     }
                 });
