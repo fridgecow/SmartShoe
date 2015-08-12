@@ -9,7 +9,7 @@
     android:paddingRight="@dimen/activity_horizontal_margin"
     android:paddingTop="@dimen/activity_vertical_margin"
 
-    tools:context="com.adafruit.bluefruit.le.connect.app.PinIOActivity">
+    tools:context="com.smartshoe.connect.app.PinIOActivity">
 
     <ScrollView
         android:id="@+id/pinScrollView"
@@ -27,7 +27,7 @@
                 android:textColor="@drawable/default_textcolor"
                 android:text="@string/pinio_sectiontitle_digital" />
 
-            <com.adafruit.bluefruit.le.connect.ui.utils.ExpandableHeightExpandableListView
+            <com.smartshoe.connect.ui.utils.ExpandableHeightExpandableListView
                 android:id="@+id/digitalPinListView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -43,7 +43,7 @@
                 android:layout_marginTop="20dp"
                 android:text="@string/pinio_sectiontitle_analog" />
 
-            <com.adafruit.bluefruit.le.connect.ui.utils.ExpandableHeightExpandableListView
+            <com.smartshoe.connect.ui.utils.ExpandableHeightExpandableListView
                 android:id="@+id/analogPinListView"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"

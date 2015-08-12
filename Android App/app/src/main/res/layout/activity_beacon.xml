@@ -17,7 +17,7 @@
         android:layout_above="@id/keyboardContainer"
         android:orientation="vertical">
 
-        <com.adafruit.bluefruit.le.connect.ui.tabs.SlidingTabLayout
+        <com.smartshoe.connect.ui.tabs.SlidingTabLayout
             android:id="@+id/sliding_tabs"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"/>

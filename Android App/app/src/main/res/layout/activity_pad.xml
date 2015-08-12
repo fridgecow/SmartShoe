@@ -5,7 +5,7 @@
     android:layout_height="match_parent"
     android:background="@drawable/default_background"
     android:orientation="vertical"
-    tools:context="com.adafruit.bluefruit.le.connect.app.PadActivity">
+    tools:context="com.smartshoe.connect.app.PadActivity">
 
     <View
         android:id="@+id/topSpacerView"

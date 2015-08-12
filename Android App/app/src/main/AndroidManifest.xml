@@ -1,6 +1,6 @@
 <?xml version="1.0" encoding="utf-8"?>
 <manifest xmlns:android="http://schemas.android.com/apk/res/android"
-    package="com.adafruit.bluefruit.le.connect" >
+    package="com.smartshoe.connect" >
 
     <uses-feature
         android:name="android.hardware.bluetooth_le"
@@ -19,6 +19,7 @@
     <!-- Wifi permissions are only needed if the app needs to turn off wifi to improve ble connections -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
+
 
     <!-- Notification permissions -->
     <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" />
@@ -53,7 +54,7 @@
             android:screenOrientation="fullUser" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.adafruit.bluefruit.le.connect.app.MainActivity" />
+                android:value="com.smartshoe.connect.app.MainActivity" />
         </activity>
         <activity
             android:name=".app.InfoActivity"
@@ -62,7 +63,7 @@
             android:screenOrientation="fullUser" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.adafruit.bluefruit.le.connect.app.MainActivity" />
+                android:value="com.smartshoe.connect.app.MainActivity" />
         </activity>
         <activity
             android:name=".app.CommonHelpActivity"
@@ -70,7 +71,7 @@
             android:screenOrientation="fullUser" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.adafruit.bluefruit.le.connect.app.InfoActivity" />
+                android:value="com.smartshoe.connect.app.InfoActivity" />
         </activity>
         <activity
             android:name=".app.UartActivity"
@@ -79,7 +80,7 @@
             android:windowSoftInputMode="adjustResize" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.adafruit.bluefruit.le.connect.app.MainActivity" />
+                android:value="com.smartshoe.connect.app.MainActivity" />
         </activity>
         <activity
             android:name=".app.PinIOActivity"
@@ -87,7 +88,7 @@
             android:screenOrientation="fullUser" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.adafruit.bluefruit.le.connect.app.MainActivity" />
+                android:value="com.smartshoe.connect.app.MainActivity" />
         </activity>
         <activity
             android:name=".app.ControllerActivity"
@@ -96,7 +97,7 @@
             android:screenOrientation="fullUser" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.adafruit.bluefruit.le.connect.app.MainActivity" />
+                android:value="com.smartshoe.connect.app.MainActivity" />
         </activity>
         <activity
             android:name=".app.PadActivity"
@@ -104,7 +105,7 @@
             android:screenOrientation="fullUser" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.adafruit.bluefruit.le.connect.app.MainActivity" />
+                android:value="com.smartshoe.connect.app.MainActivity" />
         </activity>
         <activity
             android:name=".app.settings.SettingsActivity"
@@ -140,7 +141,7 @@
             android:parentActivityName=".app.ControllerActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.adafruit.bluefruit.le.connect.app.ControllerActivity" />
+                android:value="com.smartshoe.connect.app.ControllerActivity" />
         </activity>
         <activity
             android:name=".app.settings.MqttUartSettingsActivity"
@@ -148,7 +149,7 @@
             android:parentActivityName=".app.UartActivity" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.adafruit.bluefruit.le.connect.app.UartActivity" />
+                android:value="com.smartshoe.connect.app.UartActivity" />
         </activity>
     </application>
 

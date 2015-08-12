@@ -7,7 +7,7 @@
             android:paddingLeft="@dimen/activity_horizontal_margin"
             android:paddingRight="@dimen/activity_horizontal_margin"
             android:paddingTop="@dimen/activity_vertical_margin"
-            tools:context="com.adafruit.bluefruit.le.connect.app.ColorPickerActivity">
+            tools:context="com.smartshoe.connect.app.ColorPickerActivity">
 
 
     <LinearLayout
@@ -17,7 +17,7 @@
         >
 
         <!--
-            <com.adafruit.bluefruit.le.connect.ui.utils.ColorPicker
+            <com.smartshoe.connect.ui.utils.ColorPicker
                 android:id="@+id/colorPicker"
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"/>
