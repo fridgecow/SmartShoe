@@ -16,6 +16,7 @@ Adafruit_NeoPixel pixels = Adafruit_NeoPixel(4, 10, NEO_GRB + NEO_KHZ800); //Neo
 int mode = 0; //Default mode (off)
 int activate = 0; //Number of 'heelclicks' registered.
 unsigned long schmittTimer = 0; //Prevents repeated heel clicks.
+unsigned long refreshTimer = 0;
 uint32_t PixelArray[] = {0,0,0,0}; //Caches the current state so that a 'refresh' doesn't always happen
 bool pixelChanged = false; //Have the pixels *actually* been changed.
 float mouseOffset = 180;
@@ -133,9 +134,22 @@ void loop() {
     TIME[1] = parsefloat(bleString+6);
     bleIndex = 0;
     
-    Serial.print("TIME: "); Serial.print(TIME[0]); Serial.print(":"); Serial.println(TIME[1]);
+    //Serial.print("TIME: "); Serial.print(TIME[0]); Serial.print(":"); Serial.println(TIME[1]);
   }else if(bleString[1] == 'N' && bleIndex == 7){ //Parse notifications
-    Serial.println(parsefloat(bleString+2));
+    //Serial.println(parsefloat(bleString+2));
+    //Acknowledge
+    ble.print("!Nack");
+    //Issue a white 'flare' on the LEDs
+    for(int p = 0; p<4; p++){
+      Serial.print("Flaring");
+      
+      if(p>0) pixels.setPixelColor(p-1, pixels.Color(0,0,0));
+      pixels.setPixelColor(p, pixels.Color(255, 255, 255));
+      pixels.show();
+      delay(250);
+      
+      ble.print("!Nack");
+    }
     bleIndex = 0;
   }
   
@@ -161,6 +175,7 @@ void loop() {
   }else if(mode == 2){ //Compass functionality
     pointDir(head, 0);
   }else if(mode == 3){ //Time
+    Serial.println(round((float)TIME[1]/(float)5));
     for(int p = 0; p<4; p++){
       setPixel(p, pixels.Color(0, 255*bitRead(TIME[0], p), 255*bitRead(round((float)TIME[1]/(float)5), p)));
     }
@@ -190,7 +205,8 @@ void loop() {
     ble.println("Heel Click Over BLE!");
   }
   //Output
-  if(pixelChanged){
+  if(pixelChanged || millis() - refreshTimer > 5000){ //Only update if changed, or give a refresh every so often.
+    refreshTimer = millis();
     pixels.show();
     pixelChanged = false;
   }
