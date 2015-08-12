@@ -70,14 +70,14 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     private final static int kSendDataInterval = 500;   // milliseconds
 
     // Sensor Types
-    private static final int kSensorType_Quaternion = 0;
-    private static final int kSensorType_Accelerometer = 1;
-    private static final int kSensorType_Gyroscope = 2;
-    private static final int kSensorType_Magnetometer = 3;
-    private static final int kSensorType_Location = 4;
-    private static final int kSensorType_Time = 5;
-    private static final int kSensorType_Notify = 6;
-    private static final int kNumSensorTypes = 7;
+    private static final int kSensorType_Quaternion = 3;
+    private static final int kSensorType_Accelerometer = 4;
+    private static final int kSensorType_Gyroscope = 5;
+    private static final int kSensorType_Magnetometer = 6;
+    private static final int kSensorType_Location = 0;
+    private static final int kSensorType_Time = 1;
+    private static final int kSensorType_Notify = 2;
+    private static final int kNumSensorTypes = 3;
 
     // UI
     private ExpandableHeightExpandableListView mControllerListView;
@@ -235,7 +235,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     private Runnable mPeriodicallySendData = new Runnable() {
         @Override
         public void run() { //Runs in a seperate thread, sends data.
-            final String[] prefixes = {"!Q", "!A", "!G", "!M", "!L", "!T", "!N"};     // same order that kSensorType
+            final String[] prefixes = {"!L", "!T", "!N","!Q", "!A", "!G", "!M"};     // same order that kSensorType
 
             //Update time
             Calendar mCal = Calendar.getInstance();
@@ -347,7 +347,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     }
 
     private void registerEnabledSensorListeners(boolean register) {
-
+        /* Not using these - causes out of bounds errors.
         // Accelerometer
         if (register && (mSensorData[kSensorType_Accelerometer].enabled || mSensorData[kSensorType_Quaternion].enabled)) {
             mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
@@ -367,7 +367,8 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
             mSensorManager.registerListener(this, mMagnetometer, SensorManager.SENSOR_DELAY_NORMAL);
         } else {
             mSensorManager.unregisterListener(this, mMagnetometer);
-        }
+        }*/
+
 
         // Location
         if (mGoogleApiClient.isConnected()) {
@@ -429,6 +430,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
 
     @Override
     public final void onSensorChanged(SensorEvent event) {
+        /* Not using these - and they cause out of bounds errors.
         int sensorType = event.sensor.getType();
         if (sensorType == Sensor.TYPE_ACCELEROMETER) {
             //       Log.d(TAG, "Received data for accelerometer / quaternion");
@@ -448,6 +450,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
             updateOrientation();            // orientation depends on Accelerometer and Magnetometer
             mControllerListAdapter.notifyDataSetChanged();
         }
+        */
     }
 
     private void updateOrientation() {
@@ -723,12 +726,12 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
             for (int i = 0; i < kNumSensorTypes; i++) {
                 SensorData sensorData = new SensorData();
                 sensorData.sensorType = i;
-                sensorData.enabled = false; //Sensors off by default.
+                sensorData.enabled = true; //Sensors on by default.
                 mSensorData[i] = sensorData;
             }
-            mSensorData[4].enabled = true; //Enable location by default.
-            mSensorData[5].enabled = true; //Enable clock by default.
-            mSensorData[6].enabled = true; //Enable notifications by default.
+            /*mSensorData[kSensorType_Location].enabled = true; //Enable location by default.
+            mSensorData[kSen].enabled = true; //Enable clock by default.
+            mSensorData[6].enabled = true; //Enable notifications by default.*/
 
         } else {
             // Restore status
