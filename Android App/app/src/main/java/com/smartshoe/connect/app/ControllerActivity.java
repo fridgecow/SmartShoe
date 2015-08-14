@@ -49,6 +49,7 @@ import com.google.android.gms.location.places.ui.PlacePicker;
 
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
+import java.util.Arrays;
 import java.util.Calendar;
 
 import android.content.BroadcastReceiver;
@@ -102,6 +103,8 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     private DataFragment mRetainedDataFragment;
     private NotificationReceiver nReceiver;
     private boolean NotificationReceived = false;
+
+    private int ShoeMode;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -237,15 +240,21 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
 
             //Update time
             Calendar mCal = Calendar.getInstance();
-            mSensorData[kSensorType_Time].values = new float[]{mCal.get(Calendar.HOUR), mCal.get(Calendar.MINUTE)};
+            float[] time = {mCal.get(Calendar.HOUR), mCal.get(Calendar.MINUTE)};
+            if(Arrays.equals(time, mSensorData[kSensorType_Time].values)){
+                //Do nothing
+            }else{
+                mSensorData[kSensorType_Time].values = new float[]{mCal.get(Calendar.HOUR), mCal.get(Calendar.MINUTE)};
+                mSensorData[kSensorType_Time].changed = true;
+            }
 
             //Update notifications
-            mSensorData[kSensorType_Notify].values = NotificationReceived ? new float[]{ 1 } : null; //Only send on new notification.
+            //mSensorData[kSensorType_Notify].values = NotificationReceived ? new float[]{ 1 } : null; //Only send on new notification.
 
             for (int i = 0; i < mSensorData.length; i++) {
                 SensorData sensorData = mSensorData[i];
 
-                if (sensorData.enabled && sensorData.values != null) {
+                if (sensorData.enabled && sensorData.changed && sensorData.values != null) {
                     ByteBuffer buffer = ByteBuffer.allocate(2 + sensorData.values.length * 4).order(java.nio.ByteOrder.LITTLE_ENDIAN);
 
                     // prefix
@@ -557,7 +566,13 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
             values[0] = (float) location.getLatitude();
             values[1] = (float) location.getLongitude();
             values[2] = (float) location.getAltitude();
-            sensorData.values = values;
+
+            if(Arrays.equals(values, sensorData.values)){
+                Log.d(TAG, "No location change");
+            }else {
+                sensorData.values = values;
+                sensorData.changed = true;
+            }
         }
         mControllerListAdapter.notifyDataSetChanged();
     }
@@ -568,6 +583,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
         public int sensorType;
         public float[] values;
         public boolean enabled;
+        public boolean changed;
     }
 
     private class ExpandableListAdapter extends BaseExpandableListAdapter {
@@ -751,7 +767,8 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
             String temp = intent.getStringExtra("notification_event") + "\n";
 
             if(temp.indexOf("onNotificationPosted :") == 0) { //New notification
-                NotificationReceived = true;
+                mSensorData[kSensorType_Notify].values = new float[] { 1 };
+                mSensorData[kSensorType_Notify].changed = true;
             }
         }
     }
@@ -768,12 +785,37 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                     @Override
                     public void run() {
                         Log.d(TAG, "Running in UI thread: '"+data+"'");
-                        if (data.trim().equalsIgnoreCase("!Nack")) {
-                            //Notification was received - stop sending it.
-                            NotificationReceived = false;
-                            Log.d(TAG, "Cleared notification");
-                        }else{
-                            Toast.makeText(getApplicationContext(), data, Toast.LENGTH_SHORT)
+
+                        if(data.charAt(0) == '!') { //Command
+                            char ctype = data.charAt(1);
+                            String carg = data.substring(2).trim().toLowerCase();
+                            if (ctype == 'N') { //Notification
+                                if(carg.equals("ack")){
+                                    mSensorData[kSensorType_Notify].changed = false;
+                                }
+                            }else if(ctype == 'L') { //Location
+                                if(carg.equals("ack")){
+                                    mSensorData[kSensorType_Location].changed = false;
+                                }
+                            }else if(ctype == 'T') { //Time
+                                if (carg.equals("ack")) {
+                                    mSensorData[kSensorType_Time].changed = false;
+                                }
+                            }else if(ctype == 'M') { //Mode
+                                ShoeMode = Character.getNumericValue(data.charAt(2));
+                                Toast.makeText(getApplicationContext(), "Mode: "+ShoeMode, Toast.LENGTH_SHORT).show();
+                            }else if(ctype == 'R') { //'R'eset, or maybe other system commands in future.
+                                if(carg.equals("eset")) { //Resend everything.
+                                    for(int i = 0; i < mSensorData.length; i++) {
+                                        mSensorData[i].changed = true;
+                                    }
+                                    //Send mode too
+                                    String msg = "!M" + ShoeMode;
+                                    sendDataWithCRC(msg.getBytes());
+                                }
+                            }
+                        }else { //Message
+                            Toast.makeText(getApplicationContext(), data, Toast.LENGTH_SHORT).show();
                         }
                     }
                 });

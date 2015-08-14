@@ -6,6 +6,9 @@
 #include <Adafruit_BluefruitLE_UART.h>
 #include <Adafruit_NeoPixel.h>
 
+//#include <TimerOne.h>
+#include <avr/wdt.h>
+
 #define MODES 4
 
 Adafruit_BluefruitLE_UART ble(Serial1, 12); //BLE module
@@ -17,30 +20,31 @@ int mode = 0; //Default mode (off)
 int activate = 0; //Number of 'heelclicks' registered.
 unsigned long schmittTimer = 0; //Prevents repeated heel clicks.
 unsigned long refreshTimer = 0;
+unsigned long bleTimer = 0;
 uint32_t PixelArray[] = {0,0,0,0}; //Caches the current state so that a 'refresh' doesn't always happen
 bool pixelChanged = false; //Have the pixels *actually* been changed.
 float mouseOffset = 180;
 //String serialString;
-uint8_t bleString[21];
+uint8_t bleString[101];
 uint16_t bleIndex = 0;
+bool hanged = false;
 
 float GPS[3];
-int TIME[2];
+byte TIME[2];
 
 void setup() {
+  wdt_disable();
   Mouse.begin();
-  Serial.begin(115200);
-  
-  // Try to init the accelerometer
-  lsm.init();
-  lsm.enableDefault();
+  Serial.begin(115200);  
   
   //Default calibration values
   lsm.m_min = (LSM303::vector<int16_t>){  -492,   -947,   -402};
   lsm.m_max = (LSM303::vector<int16_t>){  +534,   +182,   +538};
   
   //Try to init BLE
-  if (!ble.begin(true)) Serial.println("Couldn't find Bluefruit");
+  if (!ble.begin(false)) Serial.println(F("Couldn't find Bluefruit"));
+  //Disable command echo from Bluefruit
+  ble.echo(false);
   
   //Try to init neopixels
   pixels.begin();
@@ -48,14 +52,25 @@ void setup() {
   //Perform a factory reset of BLE to make sure everything is in a known state
   //Serial.println("Performing a factory reset: ");
   //if (!ble.factoryReset()) Serial.println("Couldn't factory reset");
-
-  //Disable command echo from Bluefruit
-  ble.echo(false);
   
   //Change name
-  if (!ble.sendCommandCheckOK(F("AT+GAPDEVNAME=Tom's SmartShoe"))) Serial.println("Could not set device name?");
+  //if (!ble.sendCommandCheckOK(F("AT+GAPDEVNAME=Tom's SmartShoe"))) Serial.println(F("Could not set device name?"));
   
-  Serial.println("OK!, hardware ready!");
+  Serial.println(F("OK!, hardware ready!"));
+  
+  //ble.println("\n");
+  ble.println("!Reset\n");
+  /*
+  lsm.read();*/
+  //Timer1.initialize(5000000);
+  
+  wdt_enable(WDTO_2S);
+  
+  Serial.println(F("Enabling LSM"));
+  lsm.init();
+  lsm.enableDefault();
+  
+  
 }
 
 void setPixel(uint16_t n, uint32_t colour){ //Buffers and caches pixel changes
@@ -93,7 +108,7 @@ int calcBearing(float flat1, float flon1, float flat2, float flon2){
   return bear_calc;
 }
 
-void pointDir(float head, int target){ //Outputs a compass/GPS heading.
+void pointDir(float head, int target){ //Outputs a compass/GPS heading to the pixels
     float brightnesses[] = {0, 0, 0, 0};
     for(int pixel = 0; pixel <= 4; pixel++){ //Loop through all pixels - First one twice, once as 0 and then as 360
       //Angle of this pixel - reversed and -90 as the pixels were wired ccw, and adjusted for target bearing.
@@ -104,24 +119,35 @@ void pointDir(float head, int target){ //Outputs a compass/GPS heading.
       if (brightnesses[pixel%4] <= brightness) brightnesses[pixel%4] = brightness;
     }
     for(int pixel = 0; pixel < 4; pixel++){ //Write out
-      setPixel(pixel, pixels.Color(0,(int)(255*brightnesses[pixel]), 0));
+      setPixel(pixel, pixels.Color(0,(int)(64*brightnesses[pixel]), 0));
     }
 }
 
 void loop() {
+  wdt_reset();
+
   lsm.read();
   float head = lsm.heading(); //Get heading from magnetometer
-  //ble.print("\n");
   
-  while(ble.available() > 0){ //Check for incoming BLE data
+  bleTimer = millis();
+  while(ble.available() > 0 && millis() - bleTimer < 500){ //Check for incoming BLE data
      char c = (char)ble.read();
      if (c == '!'){ //New command
        bleIndex = 0;
      }
-     bleString[bleIndex] = c;
+     if(bleIndex < 101){
+       bleString[bleIndex] = c;
+     }else{
+       Serial.println("Overflowed buffer: ");
+       for(int j = 0; j < 101; j++){
+         Serial.print((char)bleString[j]);
+       }
+       bleIndex = 0;
+     }
      bleIndex++;
   }
   if(bleString[1] == 'L' && bleIndex == 15){ //Parse GPS data
+    ble.println("!Lack");
     GPS[0] = parsefloat(bleString+2);
     GPS[1] = parsefloat(bleString+6);
     GPS[2] = parsefloat(bleString+10);
@@ -135,6 +161,7 @@ void loop() {
     
     bleIndex = 0; //Reset ble.
   }else if(bleString[1] == 'T' && bleIndex == 11){ //Parse time
+    ble.println("!Tack");
     TIME[0] = parsefloat(bleString+2);
     TIME[1] = parsefloat(bleString+6);
     bleIndex = 0;
@@ -143,18 +170,22 @@ void loop() {
   }else if(bleString[1] == 'N' && bleIndex == 7){ //Parse notifications
     //Serial.println(parsefloat(bleString+2));
     //Acknowledge
-    ble.print("!Nack");
+    ble.println("!Nack");
     //Issue a white 'flare' on the LEDs
+    wdt_reset();
     for(int p = 0; p<4; p++){
       if(p>0) pixels.setPixelColor(p-1, pixels.Color(0,0,0));
-      pixels.setPixelColor(p, pixels.Color(255, 255, 255));
+      pixels.setPixelColor(p, pixels.Color(64, 64, 64));
       pixels.show();
       delay(250);
       
-      ble.print("!Nack");
+      ble.println("!Nack");
     }
     pixelChanged = true;
     bleIndex = 0;
+  }else if(bleString[1] == 'M' && bleIndex == 3){
+    mode = bleString[2]-'0'; 
+    ble.println("Received Mode, "+(String)mode);
   }
   
   if(mode == 0 && (millis() - schmittTimer) > 500){ //Not active - clear screen
@@ -163,24 +194,25 @@ void loop() {
     }
     if(activate > 2){ //3 heel clicks (or more!)
       mode = 1;
+      ble.println("!M1");
       activate = 0;
-      Serial.println("Active!");
+      Serial.println(F("Active!"));
     }
   }else if(mode == 1){ //GPS functionality
     if(GPS[0] == 0 && GPS[1] == 0){ //No fix (yet)
       for(int p = 0; p<4; p++){
-        setPixel(p, pixels.Color(255,0,255));//Purple
+        setPixel(p, pixels.Color(64,0,64));//Purple
       }
     }else{ //Fix
       int bearing = calcBearing(GPS[0], GPS[1], 53.376518, -1.494527);
-      Serial.print("Bearing: "); Serial.println(bearing);
+      Serial.print(F("Bearing: ")); Serial.println(bearing);
       pointDir(head, bearing);
     }
   }else if(mode == 2){ //Compass functionality
     pointDir(head, 0);
   }else if(mode == 3){ //Time
     for(int p = 0; p<4; p++){
-      setPixel(p, pixels.Color(255*bitRead(round((float)TIME[1]/(float)5), p), 255*bitRead(TIME[0], p), 0));
+      setPixel(p, pixels.Color(64*bitRead(round((float)TIME[1]/(float)5), p), 64*bitRead(TIME[0], p), 0));
     }
   }else if(mode == 4){ //Mouse mode
     if((millis() - schmittTimer) < 500) float mouseOffset = head;
@@ -194,7 +226,7 @@ void loop() {
       if(activate <= 3) activate++; //Increase heelclicks
       
       for(int p = 0; p < activate; p++){ //Write out
-        setPixel(p, pixels.Color(255, 0, 0));
+        setPixel(p, pixels.Color(64, 0, 0));
       }
     }else{ //Active
       mode++;
@@ -202,15 +234,20 @@ void loop() {
         mode = 0;
         activate = 2; //Give a 5 second reset.
       }
+      ble.println("!M"+(String)mode);
     }
     schmittTimer = millis(); //Reset timer
-    Serial.println("Heel Click!");
-    ble.println("Heel Click Over BLE!");
+    Serial.println(F("Heel Click!"));
+    //ble.println("Heel Click Over BLE!");
   }
   //Output
   if(pixelChanged || millis() - refreshTimer > 1000){ //Only update if changed, or give a refresh every so often.
     refreshTimer = millis();
     pixels.show();
     pixelChanged = false;
+    
+    Serial.println(F("What's up!"));
+    Serial.println(head);
+    //ble.println(head);
   }
 }
