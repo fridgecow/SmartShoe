@@ -32,6 +32,7 @@ import android.widget.TextView;
 import android.widget.Toast;
 import android.widget.ToggleButton;
 
+import com.google.android.gms.location.places.Place;
 import com.smartshoe.connect.R;
 import com.smartshoe.connect.app.settings.ConnectedSettingsActivity;
 import com.smartshoe.connect.ble.BleManager;
@@ -136,19 +137,19 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (position == 0) {
 
-                    Intent i = new Intent("com.smartshoe.connect.app.NOTIFICATION_LISTENER_SERVICE_EXAMPLE");
+                    /*Intent i = new Intent("com.smartshoe.connect.app.NOTIFICATION_LISTENER_SERVICE_EXAMPLE");
                     i.putExtra("command","list");
                     sendBroadcast(i);
-                    Log.d(TAG, "Sent list command");
-                    /*Intent intent = new Intent(ControllerActivity.this, ColorPickerActivity.class);
-                    startActivityForResult(intent, 0);*/
+                    Log.d(TAG, "Sent list command");*/
+                    Intent intent = new Intent(ControllerActivity.this, ColorPickerActivity.class);
+                    startActivityForResult(intent, 0);
                 } else { //Destination picker
-                    int PLACE_PICKER_REQUEST = 1;
+                    //int PLACE_PICKER_REQUEST = 1;
                     PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
 
                     Context context = getApplicationContext();
                     try {
-                        startActivityForResult(builder.build(context), PLACE_PICKER_REQUEST);
+                        startActivityForResult(builder.build(context), 1);
                     } catch (GooglePlayServicesRepairableException e) {
                         Log.d(TAG, "Play repairable");
                     } catch (GooglePlayServicesNotAvailableException e) {
@@ -324,10 +325,26 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     protected void onActivityResult(int requestCode, int resultCode, Intent data) {
         super.onActivityResult(requestCode, resultCode, data);
 
-        if (requestCode == 0) {
+        if (requestCode == 0) { //Color Picker
             if (resultCode < 0) {       // Unexpected disconnect
                 setResult(resultCode);
                 finish();
+            }
+        } else if (requestCode == 1) { //Place Picker
+            if (resultCode == RESULT_OK) {
+                Place place = PlacePicker.getPlace(data, this);
+                String toastMsg = String.format("Target Location is now: %s", place.getName());
+                Toast.makeText(this, toastMsg, Toast.LENGTH_LONG).show();
+
+                //Send data
+                ByteBuffer buffer = ByteBuffer.allocate(10).order(java.nio.ByteOrder.LITTLE_ENDIAN);
+                String prefix = "!D";
+                buffer.put(prefix.getBytes());
+                buffer.putFloat((float)place.getLatLng().latitude);
+                buffer.putFloat((float)place.getLatLng().longitude);
+
+                byte[] result = buffer.array();
+                sendDataWithCRC(result);
             }
         }
     }
@@ -812,10 +829,11 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                                     //Send mode too
                                     String msg = "!M" + ShoeMode;
                                     sendDataWithCRC(msg.getBytes());
+                                    Toast.makeText(getApplicationContext(), "Sent Mode: "+ShoeMode, Toast.LENGTH_SHORT).show();
                                 }
                             }
                         }else { //Message
-                            Toast.makeText(getApplicationContext(), data, Toast.LENGTH_SHORT).show();
+                            //Toast.makeText(getApplicationContext(), data, Toast.LENGTH_SHORT).show();
                         }
                     }
                 });

@@ -30,6 +30,7 @@ uint16_t bleIndex = 0;
 bool hanged = false;
 
 float GPS[3];
+float DEST[3] = {53.387584, -1.501777};
 byte TIME[2];
 
 void setup() {
@@ -160,6 +161,9 @@ void loop() {
     Serial.print(GPS[2], 4); Serial.println(" meters");*/
     
     bleIndex = 0; //Reset ble.
+  }else if(bleString[1] == 'D' && bleIndex == 11){ //Parse Destination
+    DEST[0] = parsefloat(bleString+2);
+    DEST[1] = parsefloat(bleString+6);
   }else if(bleString[1] == 'T' && bleIndex == 11){ //Parse time
     ble.println("!Tack");
     TIME[0] = parsefloat(bleString+2);
@@ -204,7 +208,7 @@ void loop() {
         setPixel(p, pixels.Color(64,0,64));//Purple
       }
     }else{ //Fix
-      int bearing = calcBearing(GPS[0], GPS[1], 53.376518, -1.494527);
+      int bearing = calcBearing(GPS[0], GPS[1], DEST[0], DEST[1]);
       Serial.print(F("Bearing: ")); Serial.println(bearing);
       pointDir(head, bearing);
     }
