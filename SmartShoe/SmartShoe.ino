@@ -38,10 +38,6 @@ void setup() {
   Mouse.begin();
   Serial.begin(115200);  
   
-  //Default calibration values
-  lsm.m_min = (LSM303::vector<int16_t>){  -492,   -947,   -402};
-  lsm.m_max = (LSM303::vector<int16_t>){  +534,   +182,   +538};
-  
   //Try to init BLE
   if (!ble.begin(false)) Serial.println(F("Couldn't find Bluefruit"));
   //Disable command echo from Bluefruit
@@ -65,13 +61,16 @@ void setup() {
   lsm.read();*/
   //Timer1.initialize(5000000);
   
-  wdt_enable(WDTO_2S);
-  
   Serial.println(F("Enabling LSM"));
+  
   lsm.init();
   lsm.enableDefault();
   
+  //Calibrate Compass - particularly important due to magnets in shoe.
+  lsm.m_min = (LSM303::vector<int16_t>){  -501,   -812,   -357};
+  lsm.m_max = (LSM303::vector<int16_t>){  +556,   +265,   +719};
   
+  wdt_enable(WDTO_1S);
 }
 
 void setPixel(uint16_t n, uint32_t colour){ //Buffers and caches pixel changes
@@ -176,11 +175,11 @@ void loop() {
     //Acknowledge
     ble.println("!Nack");
     //Issue a white 'flare' on the LEDs
-    wdt_reset();
     for(int p = 0; p<4; p++){
       if(p>0) pixels.setPixelColor(p-1, pixels.Color(0,0,0));
       pixels.setPixelColor(p, pixels.Color(64, 64, 64));
       pixels.show();
+      wdt_reset();
       delay(250);
       
       ble.println("!Nack");
