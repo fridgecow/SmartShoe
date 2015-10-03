@@ -48,12 +48,23 @@ import com.google.android.gms.location.LocationRequest;
 import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.ui.PlacePicker;
 
+import java.io.IOException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
 import java.util.Calendar;
 
 import android.content.BroadcastReceiver;
+
+import org.apache.http.HttpResponse;
+import org.apache.http.client.ClientProtocolException;
+import org.apache.http.client.HttpClient;
+import org.apache.http.client.methods.HttpPost;
+import org.apache.http.impl.client.DefaultHttpClient;
+import org.apache.http.util.EntityUtils;
+import org.json.JSONArray;
+import org.json.JSONException;
+import org.json.JSONObject;
 
 public class ControllerActivity extends UartInterfaceActivity implements BleManager.BleManagerListener, SensorEventListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
     // Log
@@ -70,10 +81,6 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     private final static int kSendDataInterval = 500;   // milliseconds
 
     // Sensor Types
-    private static final int kSensorType_Quaternion = 3;
-    private static final int kSensorType_Accelerometer = 4;
-    private static final int kSensorType_Gyroscope = 5;
-    private static final int kSensorType_Magnetometer = 6;
     private static final int kSensorType_Location = 0;
     private static final int kSensorType_Time = 1;
     private static final int kSensorType_Notify = 2;
@@ -90,20 +97,10 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     // Data
     private Handler sendDataHandler = new Handler();
     private GoogleApiClient mGoogleApiClient;
-    private SensorManager mSensorManager;
     private SensorData[] mSensorData;
-    private Sensor mAccelerometer;
-    private Sensor mGyroscope;
-    private Sensor mMagnetometer;
-    private Sensor mTime;
-
-    private float[] mRotation = new float[9];
-    private float[] mOrientation = new float[3];
-    private float[] mQuaternion = new float[4];
 
     private DataFragment mRetainedDataFragment;
     private NotificationReceiver nReceiver;
-    private boolean NotificationReceived = false;
 
     private int ShoeMode;
 
@@ -118,7 +115,6 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
         //Init notification things
         nReceiver = new NotificationReceiver();
         IntentFilter filter = new IntentFilter("com.smartshoe.connect.app.NOTIFICATION_LISTENER_EXAMPLE");
-        //filter.addAction("com.smartshoe.connect.app.NOTIFICATION_LISTENER_EXAMPLE");
         registerReceiver(nReceiver,filter);
 
         // UI
@@ -136,11 +132,6 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (position == 0) {
-
-                    /*Intent i = new Intent("com.smartshoe.connect.app.NOTIFICATION_LISTENER_SERVICE_EXAMPLE");
-                    i.putExtra("command","list");
-                    sendBroadcast(i);
-                    Log.d(TAG, "Sent list command");*/
                     Intent intent = new Intent(ControllerActivity.this, ColorPickerActivity.class);
                     startActivityForResult(intent, 0);
                 } else { //Destination picker
@@ -163,12 +154,6 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
         SharedPreferences preferences = getSharedPreferences(kPreferences, Context.MODE_PRIVATE);
         final boolean showUartTooltip = preferences.getBoolean(kPreferences_uartToolTip, true);
         mUartTooltipViewGroup.setVisibility(showUartTooltip ? View.VISIBLE : View.GONE);
-
-        // Sensors
-        mSensorManager = (SensorManager) getSystemService(Context.SENSOR_SERVICE);
-        mAccelerometer = mSensorManager.getDefaultSensor(Sensor.TYPE_ACCELEROMETER);
-        mGyroscope = mSensorManager.getDefaultSensor(Sensor.TYPE_GYROSCOPE);
-        mMagnetometer = mSensorManager.getDefaultSensor(Sensor.TYPE_MAGNETIC_FIELD);
 
         // Google Play Services (used for location updates)
         buildGoogleApiClient();
@@ -237,7 +222,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     private Runnable mPeriodicallySendData = new Runnable() {
         @Override
         public void run() { //Runs in a seperate thread, sends data.
-            final String[] prefixes = {"!L", "!T", "!N","!Q", "!A", "!G", "!M"};     // same order that kSensorType
+            final String[] prefixes = {"!L", "!T", "!N","!Q", "!A", "!  G", "!M"};     // same order that kSensorType
 
             //Update time
             Calendar mCal = Calendar.getInstance();
@@ -454,51 +439,6 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
 
     @Override
     public final void onSensorChanged(SensorEvent event) {
-        /* Not using these - and they cause out of bounds errors.
-        int sensorType = event.sensor.getType();
-        if (sensorType == Sensor.TYPE_ACCELEROMETER) {
-            //       Log.d(TAG, "Received data for accelerometer / quaternion");
-            mSensorData[kSensorType_Accelerometer].values = event.values;
-
-            updateOrientation();            // orientation depends on Accelerometer and Magnetometer
-            mControllerListAdapter.notifyDataSetChanged();
-        } else if (sensorType == Sensor.TYPE_GYROSCOPE) {
-            //       Log.d(TAG, "Received data for gyroscope");
-            mSensorData[kSensorType_Gyroscope].values = event.values;
-
-            mControllerListAdapter.notifyDataSetChanged();
-        } else if (sensorType == Sensor.TYPE_MAGNETIC_FIELD) {
-//            Log.d(TAG, "Received data for magnetometer / quaternion");
-            mSensorData[kSensorType_Magnetometer].values = event.values;
-
-            updateOrientation();            // orientation depends on Accelerometer and Magnetometer
-            mControllerListAdapter.notifyDataSetChanged();
-        }
-        */
-    }
-
-    private void updateOrientation() {
-        float[] lastAccelerometer = mSensorData[kSensorType_Accelerometer].values;
-        float[] lastMagnetometer = mSensorData[kSensorType_Magnetometer].values;
-        if (lastAccelerometer != null && lastMagnetometer != null) {
-            SensorManager.getRotationMatrix(mRotation, null, lastAccelerometer, lastMagnetometer);
-            SensorManager.getOrientation(mRotation, mOrientation);
-
-            final boolean kUse4Components = true;
-            if (kUse4Components) {
-                SensorManager.getQuaternionFromVector(mQuaternion, mOrientation);
-                // Quaternions in Android are stored as [w, x, y, z], so we change it to [x, y, z, w]
-                float w = mQuaternion[0];
-                mQuaternion[0] = mQuaternion[1];
-                mQuaternion[1] = mQuaternion[2];
-                mQuaternion[2] = mQuaternion[3];
-                mQuaternion[3] = w;
-
-                mSensorData[kSensorType_Quaternion].values = mQuaternion;
-            } else {
-                mSensorData[kSensorType_Quaternion].values = mOrientation;
-            }
-        }
     }
 
     // region BleManagerListener
@@ -620,8 +560,6 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
         @Override
         public int getChildrenCount(int groupPosition) {
             switch (groupPosition) {
-                case kSensorType_Quaternion:
-                    return 4;       // Quaternion (x, y, z, w)
                 case kSensorType_Location: {
                     SensorData sensorData = mSensorData[groupPosition];
                     return sensorData.values == null ? 1 : 3;
@@ -823,13 +761,14 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                                 Toast.makeText(getApplicationContext(), "Mode: "+ShoeMode, Toast.LENGTH_SHORT).show();
                             }else if(ctype == 'R') { //'R'eset, or maybe other system commands in future.
                                 if(carg.equals("eset")) { //Resend everything.
-                                    for(int i = 0; i < mSensorData.length; i++) {
-                                        mSensorData[i].changed = true;
-                                    }
                                     //Send mode too
                                     String msg = "!M" + ShoeMode;
                                     sendDataWithCRC(msg.getBytes());
                                     Toast.makeText(getApplicationContext(), "Sent Mode: "+ShoeMode, Toast.LENGTH_SHORT).show();
+
+                                    for(int i = 0; i < mSensorData.length; i++) {
+                                        mSensorData[i].changed = true;
+                                    }
                                 }
                             }
                         }else { //Message

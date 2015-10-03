@@ -60,15 +60,6 @@
                 android:value="com.smartshoe.connect.app.MainActivity" />
         </activity>
         <activity
-            android:name=".app.InfoActivity"
-            android:label="@string/title_activity_info"
-            android:parentActivityName=".app.MainActivity"
-            android:screenOrientation="fullUser" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.smartshoe.connect.app.MainActivity" />
-        </activity>
-        <activity
             android:name=".app.CommonHelpActivity"
             android:parentActivityName=".app.InfoActivity"
             android:screenOrientation="fullUser" >
@@ -86,25 +77,9 @@
                 android:value="com.smartshoe.connect.app.MainActivity" />
         </activity>
         <activity
-            android:name=".app.PinIOActivity"
-            android:label="@string/title_activity_pin_io"
-            android:screenOrientation="fullUser" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.smartshoe.connect.app.MainActivity" />
-        </activity>
-        <activity
             android:name=".app.ControllerActivity"
             android:label="@string/title_activity_controller"
             android:parentActivityName=".app.MainActivity"
-            android:screenOrientation="fullUser" >
-            <meta-data
-                android:name="android.support.PARENT_ACTIVITY"
-                android:value="com.smartshoe.connect.app.MainActivity" />
-        </activity>
-        <activity
-            android:name=".app.PadActivity"
-            android:label="@string/title_activity_pad"
             android:screenOrientation="fullUser" >
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
@@ -132,11 +107,6 @@
         <activity
             android:name=".app.settings.ConnectedSettingsActivity"
             android:label="@string/title_activity_connected_settings" >
-        </activity>
-        <activity
-            android:name=".app.BeaconActivity"
-            android:label="@string/title_activity_beacon"
-            android:windowSoftInputMode="stateVisible|adjustPan" >
         </activity>
         <activity
             android:name=".app.ColorPickerActivity"

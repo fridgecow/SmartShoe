@@ -311,7 +311,7 @@ public class MainActivity extends ActionBarActivity implements BleManager.BleMan
                     public void onClick(DialogInterface dialog, int which) {
                         switch (kComponentsNameIds[which]) {
                             case R.string.scan_connectservice_info: {          // Info
-                                mComponentToStartWhenConnected = InfoActivity.class;
+                                //mComponentToStartWhenConnected = InfoActivity.class;
                                 break;
                             }
                             case R.string.scan_connectservice_uart: {           // Uart
@@ -319,7 +319,7 @@ public class MainActivity extends ActionBarActivity implements BleManager.BleMan
                                 break;
                             }
                             case R.string.scan_connectservice_pinio: {        // PinIO
-                                mComponentToStartWhenConnected = PinIOActivity.class;
+                                //mComponentToStartWhenConnected = PinIOActivity.class;
                                 break;
                             }
                             case R.string.scan_connectservice_controller: {     // Controller
@@ -327,7 +327,7 @@ public class MainActivity extends ActionBarActivity implements BleManager.BleMan
                                 break;
                             }
                             case R.string.scan_connectservice_beacon: {         // Beacon
-                                mComponentToStartWhenConnected = BeaconActivity.class;
+                                //mComponentToStartWhenConnected = BeaconActivity.class;
                                 break;
                             }
                         }
@@ -499,7 +499,7 @@ public class MainActivity extends ActionBarActivity implements BleManager.BleMan
                 connect(device);
             } else {                          // if no uart, then go directly to info
                 Log.d(TAG, "No UART service found. Go to InfoActivity");
-                mComponentToStartWhenConnected = InfoActivity.class;
+                //mComponentToStartWhenConnected = InfoActivity.class;
                 connect(device);
             }
         } else {
@@ -752,9 +752,9 @@ public class MainActivity extends ActionBarActivity implements BleManager.BleMan
         showConnectionStatus(false);
         if (mComponentToStartWhenConnected != null) {
             Intent intent = new Intent(MainActivity.this, mComponentToStartWhenConnected);
-            if (mComponentToStartWhenConnected == BeaconActivity.class && mSelectedDeviceData != null) {
+            /*if (mComponentToStartWhenConnected == BeaconActivity.class && mSelectedDeviceData != null) {
                 intent.putExtra("rssi", mSelectedDeviceData.rssi);
-            }
+            }*/
             startActivityForResult(intent, kActivityRequestCode_ConnectedActivity);
         }
     }
@@ -1040,19 +1040,13 @@ public class MainActivity extends ActionBarActivity implements BleManager.BleMan
             BluetoothDeviceData deviceData = mBluetoothDevices.get(groupPosition);
 
             switch (deviceData.type) {
-                case BluetoothDeviceData.kType_Beacon:
-                    return getChildBeacon(deviceData, childPosition);
-
-                case BluetoothDeviceData.kType_UriBeacon:
-                    return getChildUriBeacon(deviceData, childPosition);
-
                 default:
                     return getChildCommon(deviceData, childPosition);
             }
         }
 
 
-        private Object getChildUriBeacon(BluetoothDeviceData deviceData, int childPosition) {
+        /*private Object getChildUriBeacon(BluetoothDeviceData deviceData, int childPosition) {
             switch (childPosition) {
                 case kChildUriBeacon_Name: {
                     String name = deviceData.device.getName();
@@ -1072,7 +1066,7 @@ public class MainActivity extends ActionBarActivity implements BleManager.BleMan
                 default:
                     return null;
             }
-        }
+        }*/
 
         private Object getChildCommon(BluetoothDeviceData deviceData, int childPosition) {
             switch (childPosition) {

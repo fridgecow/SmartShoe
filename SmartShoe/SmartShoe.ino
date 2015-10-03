@@ -107,19 +107,31 @@ int calcBearing(float flat1, float flon1, float flat2, float flon2){
 
   return bear_calc;
 }
-
-void pointDir(float head, int target){ //Outputs a compass/GPS heading to the pixels
+float calcBrightness(float head, float angle, int target){
+  float diff = abs(head - angle); //Difference between this pixel and our heading
+  float brightness = (float)(90 - diff)/(float)90;
+ 
+  if(angle == 0 || angle == 360){ //Calculate around the circle
+    float altAngle = 360 - angle;
+    float altDiff = abs(head - altAngle);
+    float altBrightness = (float)(90 - altDiff)/(float)90;
+    if (altBrightness > brightness){
+      brightness = altBrightness;
+    }
+  }
+  return max(brightness,0);
+}
+void pointDir(float head, int target, int r, int g, int b){ //Outputs a compass/GPS heading to the pixels
     float brightnesses[] = {0, 0, 0, 0};
-    for(int pixel = 0; pixel <= 4; pixel++){ //Loop through all pixels - First one twice, once as 0 and then as 360
+    
+    for(int pixel = 0; pixel <= 3; pixel++){ //Loop through all pixels - First one twice, once as 0 and then as 360
       //Angle of this pixel - reversed and -90 as the pixels were wired ccw, and adjusted for target bearing.
-      float angle = ((4 - pixel)*90 + target - 90)%360;
-      float diff = abs(head - angle); //Difference between this pixel and our heading
-      //Calculate 0 <= brightness <= 1
-      float brightness = (float)(90 - diff)/(float)90;
-      if (brightnesses[pixel%4] <= brightness) brightnesses[pixel%4] = brightness;
+      float angle = 270 - pixel*90;
+      brightnesses[pixel] = calcBrightness((int)(head + target)%360, angle, target);
     }
     for(int pixel = 0; pixel < 4; pixel++){ //Write out
-      setPixel(pixel, pixels.Color(0,(int)(64*brightnesses[pixel]), 0));
+      int br = 255*brightnesses[pixel];
+      setPixel(pixel, pixels.Color(br*r, br*g, br*b));
     }
 }
 
@@ -152,32 +164,24 @@ void loop() {
     GPS[1] = parsefloat(bleString+6);
     GPS[2] = parsefloat(bleString+10);
     
-    /*Serial.print("GPS Location\t");
-    Serial.print("Lat: "); Serial.print(GPS[0], 4);
-    Serial.print('\t');
-    Serial.print("Lon: "); Serial.print(GPS[1], 4);
-    Serial.print('\t');
-    Serial.print(GPS[2], 4); Serial.println(" meters");*/
-    
     bleIndex = 0; //Reset ble.
   }else if(bleString[1] == 'D' && bleIndex == 11){ //Parse Destination
     DEST[0] = parsefloat(bleString+2);
     DEST[1] = parsefloat(bleString+6);
+    
+    bleIndex = 0;
   }else if(bleString[1] == 'T' && bleIndex == 11){ //Parse time
     ble.println("!Tack");
     TIME[0] = parsefloat(bleString+2);
     TIME[1] = parsefloat(bleString+6);
     bleIndex = 0;
     
-    //Serial.print("TIME: "); Serial.print(TIME[0]); Serial.print(":"); Serial.println(TIME[1]);
   }else if(bleString[1] == 'N' && bleIndex == 7){ //Parse notifications
-    //Serial.println(parsefloat(bleString+2));
-    //Acknowledge
     ble.println("!Nack");
     //Issue a white 'flare' on the LEDs
     for(int p = 0; p<4; p++){
       if(p>0) pixels.setPixelColor(p-1, pixels.Color(0,0,0));
-      pixels.setPixelColor(p, pixels.Color(64, 64, 64));
+      pixels.setPixelColor(p, pixels.Color(255, 255, 255));
       pixels.show();
       wdt_reset();
       delay(250);
@@ -204,18 +208,19 @@ void loop() {
   }else if(mode == 1){ //GPS functionality
     if(GPS[0] == 0 && GPS[1] == 0){ //No fix (yet)
       for(int p = 0; p<4; p++){
-        setPixel(p, pixels.Color(64,0,64));//Purple
+        setPixel(p, pixels.Color(255,0,255));//Purple
       }
     }else{ //Fix
       int bearing = calcBearing(GPS[0], GPS[1], DEST[0], DEST[1]);
+      bearing = 360 - bearing;
       Serial.print(F("Bearing: ")); Serial.println(bearing);
-      pointDir(head, bearing);
+      pointDir(head, bearing, 1,0,1);
     }
   }else if(mode == 2){ //Compass functionality
-    pointDir(head, 0);
+    pointDir(head, 0,0,1,0);
   }else if(mode == 3){ //Time
     for(int p = 0; p<4; p++){
-      setPixel(p, pixels.Color(64*bitRead(round((float)TIME[1]/(float)5), p), 64*bitRead(TIME[0], p), 0));
+      setPixel(p, pixels.Color(255*bitRead(round((float)TIME[1]/(float)5), p), 255*bitRead(TIME[0], p), 0));
     }
   }else if(mode == 4){ //Mouse mode
     if((millis() - schmittTimer) < 500) float mouseOffset = head;
@@ -229,7 +234,7 @@ void loop() {
       if(activate <= 3) activate++; //Increase heelclicks
       
       for(int p = 0; p < activate; p++){ //Write out
-        setPixel(p, pixels.Color(64, 0, 0));
+        setPixel(p, pixels.Color(255, 0, 0));
       }
     }else{ //Active
       mode++;
