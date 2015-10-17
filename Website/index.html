@@ -169,7 +169,8 @@
 					if(top < target - 50 && top > target - height){ //Before grace period and after visible
 						el.style.marginLeft = -(Math.abs(top - target + 50)*offset)/2 + 10; 
 					}else if(top > target + 50 && top < target + height + el.parentElement.clientHeight){ //After grace and before invisible
-						el.style.marginLeft = -(Math.abs(top - target - 50)*offset)/2 + 10; 
+						marg = -(Math.abs(top - target - 50)*offset)/2 + 10;
+						el.style.marginLeft = marg; 
 					}else{
 						el.style.marginLeft = "10px";
 					}
@@ -180,17 +181,25 @@
 			for(i = 0; i < actions.length; i++){
 				act = actions[i]
 				act.onclick = function(){
+					if(overlay.className == "show"){ return; }
 					overlay.className = "show";
 					var ajax = new XMLHttpRequest();
-					ajax.onreadystatechange = function(req){
-						if (req.readyState == 4) {
-     							 if (req.status == 200) {
-								overlay.innerHTML = req.responseText;
+					ajax.onreadystatechange = function(){
+						if (ajax.readyState == 4) {
+     							 if (ajax.status == 200) {
+								overlay.innerHTML = ajax.responseText;
 							}
 						}
 					} 
 					ajax.open("GET", "video.html", true);
    					ajax.send(null);
+					setTimeout(function(){
+						document.body.onclick = function(){ 
+							overlay.className = ""; 
+							document.body.onclick = overlay.onclick = null; 
+						};
+						overlay.onclick = function(ev){ ev.stopPropagation() };
+					}, 500);
 				}	
 			}
 		</script>
