@@ -3,6 +3,7 @@
 		<style>
 			body {
 				font-family: sans-serif;
+				color: white;
 				font-size: 16pt;
 			}
 			#navbar {
@@ -12,6 +13,7 @@
 				width: 100%;
 				height: 50px;
 				background-color: #00B6FF;
+				box-shadow: 0px 2px 10px black;
 			}
 			#navbar a{
 				text-decoration:none;
@@ -32,11 +34,37 @@
 			#content {
 				margin-top: 50px;
 			}
-			#content div{
+			#content div.body{
 				background-attachment: fixed;
-				background-size: cover;
-				background-position: center center;
+				background-repeat: no-repeat;
+				background-position: center left;
 				min-height: 90%;
+				background-size: cover;	
+				text-shadow: 0 0 2px black;
+
+			}
+			#content div.body a{
+				color: white;
+			}
+			a.action{
+				display: block;
+				background: linear-gradient(#00B6FF,#10C6FF);
+				width: 200px;
+				padding: 20px;
+				margin-top: 50px;
+				border-radius: 10px;
+				text-decoration: none;
+				text-align: center;
+				box-shadow: 0 0 20px black;
+			}
+			a.action:active{
+				box-shadow: 0 0 10px black;
+			}
+			a.action:hover{
+				background: linear-gradient(#10C6FF, #20D6FF);
+			}
+			.scroll{
+				margin-left: 10px;
 			}
 			:target:before {
 				content:"";
@@ -44,9 +72,34 @@
 				height:50px; 
 				margin:-50px 0 0; 
 			}
+			p{
+				padding-top: 20px;
+				margin: 0px;
+				max-width: 500px;
+			}
+			h1{
+				margin-top: 0px;
+			}
+			#overlay{
+				transition-duration: 1s;
+				position: fixed;
+				right: -100%;
+				top: 0px;
+				width: 90%;
+				height: 100%;
+				z-index: 10;
+				box-shadow: -50px 0 50px black;
+				color: black;
+				background-color: white;
+				opacity: 0;
+			}
+			#overlay.show{
+				transition-duration: 1s;
+				opacity: 1;
+				right: 0px;
+				display: block;
+			}
 		</style>
-		<script>
-		</script>
 	</head>
 	<body>
 		<div id="navbar">
@@ -57,21 +110,89 @@
 		</div>
 		<div id="content">
 			<a class"anchor" name="home"></a>
-			<div class="body" id="home" style="background-image:url('images/glasses.jpg')">
-				Lorem ipsum dolor sit amet, consectetur adipiscing elit. Nunc pretium nisi in ex pretium, nec fermentum odio pulvinar. Ut accumsan turpis vitae diam ornare bibendum. Quisque dapibus diam ac cursus accumsan. Curabitur interdum cursus tellus, et finibus ex sollicitudin et. Curabitur vestibulum diam et neque pretium interdum. Praesent nulla enim, iaculis vel ante sit amet, efficitur porta mi. Etiam placerat odio ut quam malesuada pretium. Mauris dictum consectetur ligula, nec sollicitudin nibh imperdiet ac.
-
-Mauris euismod tortor a velit lobortis, ac volutpat orci dictum. Proin ipsum lectus, scelerisque non scelerisque eget, posuere quis urna. Proin vehicula nibh sit amet nibh consequat, et convallis orci sodales. Morbi sed ullamcorper ante, et aliquet ex. Sed vitae felis eget elit sollicitudin suscipit vitae eget massa. Ut dapibus eros erat, vel blandit mi consectetur ac. Nulla placerat dui justo, sed efficitur ex efficitur non. Ut rutrum mollis semper. Nullam risus justo, posuere ut ligula a, tristique venenatis odio. Praesent et faucibus eros, quis rutrum ipsum.
+			<div class="body" id="home" style="background-image:url('images/home.jpg');background-color: purple;">
+				<h1 class='scroll'><u>SmartShoe: Making a Shoe to Take You Home</u></h1>
+				<p class='scroll' data-offset='2'>
+					SmartShoe is the future of wearables. Its unique interaction with the world allows you to be more connected and involved with what's around you.
+				</p>
+				<p class='scroll' data-offset='3'>
+					I made a shoe that can give you clear, concise directions from A to B. 
+				</p>
+				<a href="#" class="action scroll" data-offset='3'>Watch a video</a>
 			</div>
 			<a class="anchor" name="inspiration"></a>
-			<div class="body" id="inspire" style="background-image:url('images/house.jpg')">
-				Sed eu quam quis lacus porta aliquam eget vitae arcu. Vestibulum ac dapibus arcu, eu sollicitudin risus. Aliquam a erat tellus. Aliquam bibendum, lorem et lacinia malesuada, nibh risus varius sem, sed ultrices diam nulla eget ligula. Vestibulum nec diam a ipsum tristique fermentum et in metus. Donec diam mauris, porta interdum laoreet non, semper eleifend purus. Fusce at nulla augue. Morbi commodo, orci in facilisis iaculis, odio ipsum tincidunt arcu, et malesuada velit diam ac diam. Nulla eget faucibus elit. Class aptent taciti sociosqu ad litora torquent per conubia nostra, per inceptos himenaeos. Etiam congue ac felis ut pellentesque. Quisque rutrum quam in convallis luctus.
-
-Ut ullamcorper ligula ut leo viverra, a euismod leo ultrices. Etiam sed nisl auctor, volutpat massa a, pellentesque diam. Sed sagittis rhoncus euismod. Proin in turpis sed velit ultricies condimentum vitae in libero. Aliquam neque mauris, scelerisque vitae condimentum eu, hendrerit non diam. Aenean ultricies tristique ultricies. Proin viverra egestas libero vitae tincidunt. Donec dictum, erat at tincidunt volutpat, nisl sem egestas velit, non aliquam lorem neque ultrices odio. Nullam luctus magna ullamcorper, volutpat erat ut, sodales neque. Fusce viverra, risus eu congue facilisis, turpis lectus ultricies tellus, a feugiat dui purus a ligula. Phasellus molestie maximus tellus accumsan tincidunt. Morbi luctus malesuada augue, in facilisis est. Vestibulum a hendrerit nisi, et dapibus purus. In hac habitasse platea dictumst. Proin eget tristique ipsum. Donec bibendum ornare arcu, eu lobortis lacus porta non.
+			<div class="body" id="inspire" style="background-image:url('images/inspiration.jpg'); background-color: blue;">
+				<h1 class='scroll'>Inspiration</h1>
+				<p class='scroll' data-offset='2'>
+					I had the idea after losing my way in a car park. I thought, <b>"there should be a way of just <i>knowing</i> the right directions."</b> SmartShoe is what I came up with.
+				</p>
+				<p class='scroll' data-offset='3'>
+					I had a look at some other smart-shoe ideas, most notably the <a href=''>Lechal shoe</a>. You can see my notes about it <a href=''>here</a>. In summary, our ideas are very similar but mine comes in at a fraction of the cost. However, the use of a haptic feedback device instead of LEDs is a consideration that I made very carefully. More in Development.
+				</p>
+				<a href="#" class="action scroll" data-offset='4'>View Full Research</a>
 			</div>
-			<div class="body" id="develop">Vestibulum ante ipsum primis in faucibus orci luctus et ultrices posuere cubilia Curae; Mauris euismod neque ornare lectus malesuada, vitae hendrerit odio iaculis. Fusce maximus velit et quam vehicula, sed egestas libero vulputate. Nullam a dapibus odio. Donec quis feugiat ipsum, non tristique purus. Integer semper pretium odio non ultrices. Donec viverra purus sed augue tristique laoreet. Duis porta vulputate finibus. Vestibulum sit amet suscipit nisi.
+			<div class="body" id="develop" style="background-image:url('images/development.jpg')">
+				<h1 class='scroll'>Development</h1>
+				<p class='scroll' data-offset='2'>
+					This shoe has been a long time coming! From an extensive research period came a rigourous build and test procedure of the first prototype.
+				</p>
+				<a href="#" class="action scroll" data-offset="3">Development Logs</a>
+			</div>
+			<div class="body" id="reflect" style="background-image:url(''); background-color: darkgreen;">
+				<h1 class='scroll'>Reflections</h1>
+				<p class='scroll' data-offset='2'>
+					(Picture of me wearing shoe)
+					Many things didn't go as planned, and many things did. It's important to focus on the positives. But, just in case you want to see all of my thoughts on the matter, click on to see my full review.
+				</p>
+				<a href="#" class="action scroll" data-offset="3">Full Reflections</a>
 
-Morbi condimentum vestibulum nulla aliquet interdum. Vestibulum cursus pharetra massa, vitae hendrerit lacus consectetur quis. Sed varius at ante non commodo. Duis tempus hendrerit aliquam. Donec ut arcu et quam egestas malesuada. Aenean scelerisque augue lobortis laoreet vulputate. Vivamus scelerisque fringilla dolor, in laoreet turpis varius quis. Aliquam nec nisi pharetra, elementum orci quis, fermentum quam. Quisque enim odio, convallis eget dolor ac, ullamcorper imperdiet mauris. Vestibulum non quam lorem. Nullam et pretium tellus, id feugiat libero. Ut ultrices turpis vitae ornare venenatis. Mauris bibendum egestas interdum. Morbi libero velit, semper ut blandit non, ultrices in ipsum. Ut quam massa, dictum eu dignissim eu, finibus sed tortor. Sed placerat egestas lacus, vitae pellentesque justo vehicula et.</div>
-			<div class="body" id="reflect"></div>
 		</div>
+		<div id="overlay"></div>
+		<script>
+			window.onscroll = function(){
+				var elements = document.getElementsByClassName('scroll');
+				for(i = 0; i<elements.length; i++){
+					var top  = window.pageYOffset || document.documentElement.scrollTop
+					var height = height = window.innerHeight || document.documentElement.clientHeight || document.body.clientHeight;
+					var el = elements[i];
+					try{
+						var target = el.attributes["data-target"].value || 0;
+					}catch(e){
+						var rect = el.parentElement.getBoundingClientRect();
+						var target = rect.top - 50 + top;
+					}
+					try{
+						var offset = el.attributes["data-offset"].value;
+					}catch(e){
+						var offset = 1;
+					}
+					if(top < target - 50 && top > target - height){ //Before grace period and after visible
+						el.style.marginLeft = -(Math.abs(top - target + 50)*offset)/2 + 10; 
+					}else if(top > target + 50 && top < target + height + el.parentElement.clientHeight){ //After grace and before invisible
+						el.style.marginLeft = -(Math.abs(top - target - 50)*offset)/2 + 10; 
+					}else{
+						el.style.marginLeft = "10px";
+					}
+				}
+			}	
+			var overlay = document.getElementById("overlay");
+			var actions = document.getElementsByClassName("action");
+			for(i = 0; i < actions.length; i++){
+				act = actions[i]
+				act.onclick = function(){
+					overlay.className = "show";
+					var ajax = new XMLHttpRequest();
+					ajax.onreadystatechange = function(req){
+						if (req.readyState == 4) {
+     							 if (req.status == 200) {
+								overlay.innerHTML = req.responseText;
+							}
+						}
+					} 
+					ajax.open("GET", "video.html", true);
+   					ajax.send(null);
+				}	
+			}
+		</script>
 	</body>
 </html>
