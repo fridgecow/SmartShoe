@@ -50,6 +50,7 @@ import com.google.android.gms.location.LocationServices;
 import com.google.android.gms.location.places.ui.PlacePicker;
 
 import java.io.IOException;
+import java.io.UnsupportedEncodingException;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -57,6 +58,7 @@ import java.util.Calendar;
 
 import android.content.BroadcastReceiver;
 
+import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.HttpClient;
@@ -85,7 +87,8 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     private static final int kSensorType_Location = 0;
     private static final int kSensorType_Time = 1;
     private static final int kSensorType_Notify = 2;
-    private static final int kNumSensorTypes = 3;
+    private static final int kSensorType_Directions = 3;
+    private static final int kNumSensorTypes = 4;
 
     // UI
     private ExpandableHeightExpandableListView mControllerListView;
@@ -105,6 +108,8 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
 
     private int ShoeMode;
     private boolean SendMode = false;
+    private String[] Directions; //Will store directions from A-B in the form of lat,long
+    private int DirectionStep = 0;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -136,7 +141,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                 if (position == 0) {
                     Intent intent = new Intent(ControllerActivity.this, ColorPickerActivity.class);
                     startActivityForResult(intent, 0);
-                    new ReadTask().execute("http://fridgecow.com/smartshoe/server");
+                    new getDirections().execute("", "");
                 } else { //Destination picker
                     //int PLACE_PICKER_REQUEST = 1;
                     PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
@@ -225,7 +230,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     private Runnable mPeriodicallySendData = new Runnable() {
         @Override
         public void run() { //Runs in a seperate thread, sends data.
-            final String[] prefixes = {"!L", "!T", "!N","!Q", "!A", "!  G", "!M"};     // same order that kSensorType
+            final String[] prefixes = {"!L", "!T", "!N","!D", "!A", "!G", "!M"};     // same order that kSensorType
 
             //Update time
             Calendar mCal = Calendar.getInstance();
@@ -764,8 +769,22 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                                 }
                             }else if(ctype == 'M') { //Mode
                                 ShoeMode = Character.getNumericValue(data.charAt(2));
-                                Toast.makeText(getApplicationContext(), "Mode: "+ShoeMode, Toast.LENGTH_SHORT).show();
+                                Toast.makeText(getApplicationContext(), "Mode: " + ShoeMode, Toast.LENGTH_SHORT).show();
                                 SendMode = false;
+                            }else if(ctype == 'D') { //Directions
+                                if (carg.equals("ack")) {
+                                    mSensorData[kSensorType_Directions].changed = false;
+                                }else if(carg.equals("next")){ //Send next direction
+                                    DirectionStep++;
+                                    String[] latLong = Directions[DirectionStep].split(",");
+                                    mSensorData[kSensorType_Directions].values = new float[]{
+                                            Float.parseFloat(latLong[0]),
+                                            Float.parseFloat(latLong[1])
+                                    };
+                                    Log.d(TAG,Float.toString(Float.parseFloat(latLong[0])));
+                                    Log.d(TAG,Float.toString(Float.parseFloat(latLong[1])));
+                                    mSensorData[kSensorType_Directions].changed = true;
+                                }
                             }else if(ctype == 'R') { //'R'eset, or maybe other system commands in future.
                                 if(carg.equals("eset")) { //Resend everything.
                                     //Send mode too
@@ -811,14 +830,30 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
         return xml;
     }
 
-    private class ReadTask extends AsyncTask<String, Integer, String>
+    private class getDirections extends AsyncTask<String, Integer, String>
     {
 
         @Override
         protected String doInBackground(String... params) {
+            String url = "http://fridgecow.com/smartshoe/server?o="+params[0]+"&d="+params[1];
+            return getResponseFromUrl(url);
 
-            Log.d(TAG, getResponseFromUrl(params[0]));
-            return "success";
+        }
+        @Override
+        protected void onPostExecute(String response) {
+            Directions = response.split("<br />\n");
+            DirectionStep = 0;
+            for (int i = 0; i < Directions.length; i++) {
+                Log.d(TAG, Directions[i]);
+            }
+            String[] latLong = Directions[DirectionStep].split(",");
+            mSensorData[kSensorType_Directions].values = new float[]{
+                    Float.parseFloat(latLong[0]),
+                    Float.parseFloat(latLong[1])
+            };
+            Log.d(TAG,Float.toString(Float.parseFloat(latLong[0])));
+            Log.d(TAG,Float.toString(Float.parseFloat(latLong[1])));
+            mSensorData[kSensorType_Directions].changed = true;
         }
     }
 }
