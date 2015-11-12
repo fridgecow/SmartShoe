@@ -812,7 +812,7 @@ public class MainActivity extends ActionBarActivity implements BleManager.BleMan
         } else {
             // Check if a firmware update is available
             boolean isCheckingFirmware = false;
-            if (mFirmwareUpdater != null) {
+            /*if (mFirmwareUpdater != null) {
                 // Don't bother the user waiting for checks if the latest connected device was this
                 String deviceAddress = mBleManager.getConnectedDeviceAddress();
                 if (!deviceAddress.equals(mLatestCheckedDeviceAddress)) {
@@ -830,7 +830,7 @@ public class MainActivity extends ActionBarActivity implements BleManager.BleMan
                 } else {
                     Log.d(TAG, "Updates: Device already checked previously. Skipping...");
                 }
-            }
+            }*/
 
             if (!isCheckingFirmware) {
                 onFirmwareUpdatesChecked(false, null, null, null);

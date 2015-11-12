@@ -180,7 +180,7 @@
 			var actions = document.getElementsByClassName("action");
 			for(i = 0; i < actions.length; i++){
 				act = actions[i]
-				act.onclick = function(){
+				act.onclick = function(e){
 					if(overlay.className == "show"){ return; }
 					overlay.className = "show";
 					var ajax = new XMLHttpRequest();
@@ -194,14 +194,17 @@
 					ajax.open("GET", "video.html", true);
    					ajax.send(null);
 					setTimeout(function(){
-						document.body.onclick = function(){ 
-							overlay.className = ""; 
-							document.body.onclick = overlay.onclick = null; 
-						};
+						document.body.onclick = back
 						overlay.onclick = function(ev){ ev.stopPropagation() };
 					}, 500);
+					e.preventDefault();
 				}	
 			}
+			back = function(){
+				overlay.className = ""; 
+				document.body.onclick = overlay.onclick = null; 
+			};
+
 		</script>
 	</body>
 </html>

@@ -16,6 +16,7 @@ import android.hardware.SensorEvent;
 import android.hardware.SensorEventListener;
 import android.hardware.SensorManager;
 import android.location.Location;
+import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
 import android.provider.Settings;
@@ -103,6 +104,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     private NotificationReceiver nReceiver;
 
     private int ShoeMode;
+    private boolean SendMode = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -134,6 +136,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                 if (position == 0) {
                     Intent intent = new Intent(ControllerActivity.this, ColorPickerActivity.class);
                     startActivityForResult(intent, 0);
+                    new ReadTask().execute("http://fridgecow.com/smartshoe/server");
                 } else { //Destination picker
                     //int PLACE_PICKER_REQUEST = 1;
                     PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
@@ -236,7 +239,10 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
 
             //Update notifications
             //mSensorData[kSensorType_Notify].values = NotificationReceived ? new float[]{ 1 } : null; //Only send on new notification.
-
+            if(SendMode){
+                String msg = "!M" + ShoeMode;
+                sendDataWithCRC(msg.getBytes());
+            }
             for (int i = 0; i < mSensorData.length; i++) {
                 SensorData sensorData = mSensorData[i];
 
@@ -741,7 +747,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                     public void run() {
                         Log.d(TAG, "Running in UI thread: '"+data+"'");
 
-                        if(data.charAt(0) == '!') { //Command
+                        if(data.charAt(0) == '!' && data.length() > 1) { //Command
                             char ctype = data.charAt(1);
                             String carg = data.substring(2).trim().toLowerCase();
                             if (ctype == 'N') { //Notification
@@ -759,11 +765,13 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                             }else if(ctype == 'M') { //Mode
                                 ShoeMode = Character.getNumericValue(data.charAt(2));
                                 Toast.makeText(getApplicationContext(), "Mode: "+ShoeMode, Toast.LENGTH_SHORT).show();
+                                SendMode = false;
                             }else if(ctype == 'R') { //'R'eset, or maybe other system commands in future.
                                 if(carg.equals("eset")) { //Resend everything.
                                     //Send mode too
-                                    String msg = "!M" + ShoeMode;
-                                    sendDataWithCRC(msg.getBytes());
+                                    SendMode = true;
+
+
                                     Toast.makeText(getApplicationContext(), "Sent Mode: "+ShoeMode, Toast.LENGTH_SHORT).show();
 
                                     for(int i = 0; i < mSensorData.length; i++) {
@@ -783,5 +791,34 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     @Override
     public void onDataAvailable(BluetoothGattDescriptor descriptor) {
 
+    }
+
+    public static String getResponseFromUrl(String url) {
+        String xml = null;
+        try {
+            DefaultHttpClient httpClient = new DefaultHttpClient();
+            HttpPost httpPost = new HttpPost(url);
+            HttpResponse httpResponse = httpClient.execute(httpPost);
+            HttpEntity httpEntity = httpResponse.getEntity();
+            xml = EntityUtils.toString(httpEntity);
+        } catch (UnsupportedEncodingException e) {
+            e.printStackTrace();
+        } catch (ClientProtocolException e) {
+            e.printStackTrace();
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return xml;
+    }
+
+    private class ReadTask extends AsyncTask<String, Integer, String>
+    {
+
+        @Override
+        protected String doInBackground(String... params) {
+
+            Log.d(TAG, getResponseFromUrl(params[0]));
+            return "success";
+        }
     }
 }
