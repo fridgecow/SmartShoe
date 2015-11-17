@@ -73,6 +73,30 @@ void setup() {
   wdt_enable(WDTO_1S);
 }
 
+unsigned long calc_dist(float flat1, float flon1, float flat2, float flon2){ //Calculates distance between 2 coordinates
+  float dist_calc=0;
+  float dist_calc2=0;
+  float diflat=0;
+  float diflon=0;
+ 
+  diflat=radians(flat2-flat1);
+  flat1=radians(flat1);
+  flat2=radians(flat2);
+  diflon=radians((flon2)-(flon1));
+ 
+  dist_calc = (sin(diflat/2.0)*sin(diflat/2.0));
+  dist_calc2= cos(flat1);
+  dist_calc2*=cos(flat2);
+  dist_calc2*=sin(diflon/2.0);
+  dist_calc2*=sin(diflon/2.0);
+  dist_calc +=dist_calc2;
+ 
+  dist_calc=(2*atan2(sqrt(dist_calc),sqrt(1.0-dist_calc)));
+ 
+  dist_calc*=6371000.0; //Converting to meters
+  return dist_calc;
+}
+
 void setPixel(uint16_t n, uint32_t colour){ //Buffers and caches pixel changes
   //ble.info();
   
@@ -166,6 +190,7 @@ void loop() {
     
     bleIndex = 0; //Reset ble.
   }else if(bleString[1] == 'D' && bleIndex == 11){ //Parse Destination
+    ble.println("!Dack");
     DEST[0] = parsefloat(bleString+2);
     DEST[1] = parsefloat(bleString+6);
     
@@ -215,6 +240,10 @@ void loop() {
       bearing = 360 - bearing;
       Serial.print(F("Bearing: ")); Serial.println(bearing);
       pointDir(head, bearing, 1,0,1);
+      
+      if(calc_dist(GPS[0], GPS[1], DEST[0], DEST[1]) < 20){ //Within 20 meters of target
+          ble.println("!Dnext"); //request next location
+      }
     }
   }else if(mode == 2){ //Compass functionality
     pointDir(head, 0,0,1,0);

@@ -332,7 +332,12 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                 String toastMsg = String.format("Target Location is now: %s", place.getName());
                 Toast.makeText(this, toastMsg, Toast.LENGTH_LONG).show();
 
-                //Send data
+                mSensorData[kSensorType_Directions].values = new float[]{
+                        (float)place.getLatLng().latitude,
+                        (float)place.getLatLng().longitude
+                };
+                mSensorData[kSensorType_Directions].changed = true;
+                /*//Send data
                 ByteBuffer buffer = ByteBuffer.allocate(10).order(java.nio.ByteOrder.LITTLE_ENDIAN);
                 String prefix = "!D";
                 buffer.put(prefix.getBytes());
@@ -340,7 +345,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                 buffer.putFloat((float)place.getLatLng().longitude);
 
                 byte[] result = buffer.array();
-                sendDataWithCRC(result);
+                sendDataWithCRC(result);*/
             }
         }
     }
