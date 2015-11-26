@@ -243,6 +243,9 @@ void loop() {
       
       if(calc_dist(GPS[0], GPS[1], DEST[0], DEST[1]) < 20){ //Within 20 meters of target
           ble.println("!Dnext"); //request next location
+          Serial.println("At destination: ");
+          Serial.println(DEST[0],5);
+          Serial.println(DEST[1],5);          //Issue a white 'flare' on the LEDs
       }
     }
   }else if(mode == 2){ //Compass functionality
@@ -283,8 +286,6 @@ void loop() {
     pixels.show();
     pixelChanged = false;
     
-    Serial.println(F("What's up!"));
-    Serial.println(head);
     //ble.println(head);
   }
 }

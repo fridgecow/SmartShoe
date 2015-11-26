@@ -332,20 +332,18 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                 String toastMsg = String.format("Target Location is now: %s", place.getName());
                 Toast.makeText(this, toastMsg, Toast.LENGTH_LONG).show();
 
+                String dest = Double.toString(place.getLatLng().latitude) + ","
+                        + Double.toString(place.getLatLng().longitude);
+                String curLocation = Float.toString(mSensorData[kSensorType_Location].values[0])+","+
+                        Float.toString(mSensorData[kSensorType_Location].values[1]);
+                new getDirections().execute(curLocation, dest);
+
+                //Just in case there's no connection or otherwise
                 mSensorData[kSensorType_Directions].values = new float[]{
                         (float)place.getLatLng().latitude,
                         (float)place.getLatLng().longitude
                 };
                 mSensorData[kSensorType_Directions].changed = true;
-                /*//Send data
-                ByteBuffer buffer = ByteBuffer.allocate(10).order(java.nio.ByteOrder.LITTLE_ENDIAN);
-                String prefix = "!D";
-                buffer.put(prefix.getBytes());
-                buffer.putFloat((float)place.getLatLng().latitude);
-                buffer.putFloat((float)place.getLatLng().longitude);
-
-                byte[] result = buffer.array();
-                sendDataWithCRC(result);*/
             }
         }
     }
@@ -780,8 +778,14 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                                 if (carg.equals("ack")) {
                                     mSensorData[kSensorType_Directions].changed = false;
                                 }else if(carg.equals("next")){ //Send next direction
+                                    Toast.makeText(getApplicationContext(), "Next leg of the journey!",Toast.LENGTH_SHORT).show();
                                     DirectionStep++;
-                                    String[] latLong = Directions[DirectionStep].split(",");
+                                    String[] latLong;
+                                    if(DirectionStep < Directions.length) {
+                                        latLong = Directions[DirectionStep].split(",");
+                                    }else{
+                                        latLong = new String[]{"0","0"};
+                                    }
                                     mSensorData[kSensorType_Directions].values = new float[]{
                                             Float.parseFloat(latLong[0]),
                                             Float.parseFloat(latLong[1])
