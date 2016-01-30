@@ -110,6 +110,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     private boolean SendMode = false;
     private String[] Directions; //Will store directions from A-B in the form of lat,long
     private int DirectionStep = 0;
+    private boolean forceWaypoint = false;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -138,11 +139,13 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
         mInterfaceListView.setOnItemClickListener(new AdapterView.OnItemClickListener() {
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
-                if (position == 0) {
-                    Intent intent = new Intent(ControllerActivity.this, ColorPickerActivity.class);
-                    startActivityForResult(intent, 0);
-                    new getDirections().execute("", "");
-                } else { //Destination picker
+                if (position == 0) { //Waypoint Controller
+                    Log.d(TAG, "Forcing...");
+                    //forceWaypoint = true;
+                    //Intent intent = new Intent(ControllerActivity.this, ColorPickerActivity.class);
+                    //startActivityForResult(intent, 0);
+                    new getDirections().execute("force");
+                } else if (position == 1){ //Destination picker
                     //int PLACE_PICKER_REQUEST = 1;
                     PlacePicker.IntentBuilder builder = new PlacePicker.IntentBuilder();
 
@@ -154,6 +157,8 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                     } catch (GooglePlayServicesNotAvailableException e) {
                         Log.d(TAG, "Play not available");
                     }
+                } else if (position == 2) { //Lock Mode
+                    //pass
                 }
             }
         });
@@ -790,9 +795,11 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                                             Float.parseFloat(latLong[0]),
                                             Float.parseFloat(latLong[1])
                                     };
+                                    //Log.d(TAG, Integer.toString(DirectionStep));
                                     Log.d(TAG,Float.toString(Float.parseFloat(latLong[0])));
                                     Log.d(TAG,Float.toString(Float.parseFloat(latLong[1])));
                                     mSensorData[kSensorType_Directions].changed = true;
+
                                 }
                             }else if(ctype == 'R') { //'R'eset, or maybe other system commands in future.
                                 if(carg.equals("eset")) { //Resend everything.
@@ -844,14 +851,26 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
 
         @Override
         protected String doInBackground(String... params) {
-            String url = "http://fridgecow.com/smartshoe/server?o="+params[0]+"&d="+params[1];
-            return getResponseFromUrl(url);
+            if(params[0] != "force") {
+                String url = "http://fridgecow.com/smartshoe/server?o=" + params[0] + "&d=" + params[1];
+                return getResponseFromUrl(url);
+            }else{
+                //forceWaypoint = true;
+                return "";
+            }
 
         }
         @Override
         protected void onPostExecute(String response) {
-            Directions = response.split("<br />\n");
-            DirectionStep = 0;
+            if (response != "") {
+                Directions = response.split("<br />\n");
+                DirectionStep = 0;
+            }else{
+                DirectionStep++;
+                if (DirectionStep >= Directions.length) {
+                    return;
+                }
+            }
             for (int i = 0; i < Directions.length; i++) {
                 Log.d(TAG, Directions[i]);
             }

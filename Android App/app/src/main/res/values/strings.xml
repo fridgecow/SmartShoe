@@ -134,8 +134,9 @@
     </string-array>
 
     <string-array name="controller_interface_items">
-        <item>Color Picker</item>
+        <item>Next Waypoint</item>
         <item>Destination Picker</item>
+        <item>Force Mode...</item>
     </string-array>
 
     <!-- Pad Activity -->

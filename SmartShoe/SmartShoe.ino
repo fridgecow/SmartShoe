@@ -132,26 +132,28 @@ int calcBearing(float flat1, float flon1, float flat2, float flon2){
   return bear_calc;
 }
 float calcBrightness(float head, float angle, int target){
-  float diff = abs(head - angle); //Difference between this pixel and our heading
-  float brightness = (float)(90 - diff)/(float)90;
+  float offset = int(abs(head + target))%360; //It's a plus so it's 'flipped' (and tells which direction to turn to)
+  float diff = abs(angle - offset); //Difference between this pixel and our heading
+  
+  float brightness = max(0, (float)1.0 - (float)(diff)/(float)90);
  
-  if(angle == 0 || angle == 360){ //Calculate around the circle
+  /*if(angle == 0 || angle == 360){ //Calculate around the circle
     float altAngle = 360 - angle;
     float altDiff = abs(head - altAngle);
     float altBrightness = (float)(90 - altDiff)/(float)90;
     if (altBrightness > brightness){
       brightness = altBrightness;
-    }
-  }
-  return max(brightness,0);
+    }*/
+  //}
+  return brightness;
 }
 void pointDir(float head, int target, int r, int g, int b){ //Outputs a compass/GPS heading to the pixels
     float brightnesses[] = {0, 0, 0, 0};
     
-    for(int pixel = 0; pixel <= 3; pixel++){ //Loop through all pixels - First one twice, once as 0 and then as 360
+    for(int pixel = 0; pixel <= 3; pixel++){ //Loop through all pixels
       //Angle of this pixel - reversed and -90 as the pixels were wired ccw, and adjusted for target bearing.
-      float angle = 270 - pixel*90;
-      brightnesses[pixel] = calcBrightness((int)(head + target)%360, angle, target);
+      float angle = 90*(4-pixel);
+      brightnesses[pixel] = calcBrightness(head, angle, target);
     }
     for(int pixel = 0; pixel < 4; pixel++){ //Write out
       int br = 255*brightnesses[pixel];
@@ -237,7 +239,7 @@ void loop() {
       }
     }else{ //Fix
       int bearing = calcBearing(GPS[0], GPS[1], DEST[0], DEST[1]);
-      bearing = 360 - bearing;
+      //bearing = 360 - bearing;
       Serial.print(F("Bearing: ")); Serial.println(bearing);
       pointDir(head, bearing, 1,0,1);
       
