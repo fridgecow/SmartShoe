@@ -5,11 +5,12 @@
 #include <Adafruit_BLE.h>
 #include <Adafruit_BluefruitLE_UART.h>
 #include <Adafruit_NeoPixel.h>
+#include <math.h>
 
 //#include <TimerOne.h>
 #include <avr/wdt.h>
 
-#define MODES 4
+#define MODES 3
 
 Adafruit_BluefruitLE_UART ble(Serial1, 12); //BLE module
 LSM303 lsm; //Accelerometer + Magnetometer
@@ -256,9 +257,12 @@ void loop() {
     for(int p = 0; p<4; p++){
       setPixel(p, pixels.Color(255*bitRead(round((float)TIME[1]/(float)5), p), 255*bitRead(TIME[0], p), 0));
     }
-  }else if(mode == 4){ //Mouse mode
-    if((millis() - schmittTimer) < 500) float mouseOffset = head;
-    Mouse.move(floor((head - mouseOffset)/80), 0, 0);
+  }else if(mode == 4){ //Send pose mode
+    ble.println("!P"+(String)lsm.m.x+","+(String)lsm.m.y+","+(String)lsm.m.z); //!Px,y,z
+    Serial.println("!P"+(String)lsm.m.x+","+(String)lsm.m.y+","+(String)lsm.m.z);
+    for(int p = 0; p<4; p++){
+      setPixel(p, pixels.Color(0, 0, 0));
+    }
   }
   
   //Heel clicks
