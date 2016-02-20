@@ -61,13 +61,9 @@ import android.content.BroadcastReceiver;
 import org.apache.http.HttpEntity;
 import org.apache.http.HttpResponse;
 import org.apache.http.client.ClientProtocolException;
-import org.apache.http.client.HttpClient;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
-import org.json.JSONArray;
-import org.json.JSONException;
-import org.json.JSONObject;
 
 public class ControllerActivity extends UartInterfaceActivity implements BleManager.BleManagerListener, SensorEventListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
     // Log
@@ -157,8 +153,9 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                     } catch (GooglePlayServicesNotAvailableException e) {
                         Log.d(TAG, "Play not available");
                     }
-                } else if (position == 2) { //Lock Mode
-                    //pass
+                } else if (position == 2) { //Force Mode
+                    Intent intent = new Intent(ControllerActivity.this, ModeSwitcher.class);
+                    startActivityForResult(intent, 0);
                 }
             }
         });

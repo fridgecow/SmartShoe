@@ -136,7 +136,15 @@
     <string-array name="controller_interface_items">
         <item>Next Waypoint</item>
         <item>Destination Picker</item>
-        <item>Force Mode...</item>
+        <item>Force Mode</item>
+    </string-array>
+
+    <string-array name="mode_names">
+        <item>Off</item>
+        <item>Navigator</item>
+        <item>Compass</item>
+        <item>Clock</item>
+        <item>Send Pose</item>
     </string-array>
 
     <!-- Pad Activity -->
@@ -321,6 +329,9 @@
 
     <!-- Common -->
     <string name="dialog_ok">Ok</string>
+    <string name="title_activity_mode_switcher">Mode Switcher</string>
+
+    <string name="hello_world">Hello world!</string>
 
     <!-- Debug -->
 

@@ -15,11 +15,9 @@
     <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE" /> <!-- Needed to download files from dropbox -->
 
 
-
     <!-- Wifi permissions are only needed if the app needs to turn off wifi to improve ble connections -->
     <uses-permission android:name="android.permission.ACCESS_WIFI_STATE" />
     <uses-permission android:name="android.permission.CHANGE_WIFI_STATE" />
-
 
     <!-- Notification permissions -->
     <uses-permission android:name="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" />
@@ -95,10 +93,10 @@
             android:label="@string/dfu_feature_title" />
 
         <service android:name=".app.update.DfuService" />
-
-        <service android:name=".app.NLService"
+        <service
+            android:name=".app.NLService"
             android:label="@string/app_name"
-            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE">
+            android:permission="android.permission.BIND_NOTIFICATION_LISTENER_SERVICE" >
             <intent-filter>
                 <action android:name="android.service.notification.NotificationListenerService" />
             </intent-filter>
@@ -123,6 +121,14 @@
             <meta-data
                 android:name="android.support.PARENT_ACTIVITY"
                 android:value="com.smartshoe.connect.app.UartActivity" />
+        </activity>
+        <activity
+            android:name=".app.ModeSwitcher"
+            android:label="@string/title_activity_mode_switcher"
+            android:parentActivityName=".app.ControllerActivity" >
+            <meta-data
+                android:name="android.support.PARENT_ACTIVITY"
+                android:value=".app.ControllerActivity" />
         </activity>
     </application>
 
