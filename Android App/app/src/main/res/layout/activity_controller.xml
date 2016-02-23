@@ -51,6 +51,21 @@
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
+                android:layout_marginTop="20dp"
+                android:text="@string/controller_sectiontitle_interface"
+                android:textColor="@drawable/default_textcolor"/>
+
+            <com.smartshoe.connect.ui.utils.ExpandableHeightListView
+                android:id="@+id/interfaceListView"
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:layout_marginTop="10dp"
+                android:divider="#dddddd"
+                android:dividerHeight="1dp"/>
+
+            <TextView
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
                 android:text="@string/controller_sectiontitle_stream"
                 android:textColor="@drawable/default_textcolor"/>
 
@@ -63,21 +78,7 @@
                 android:childDivider="#00000000"
                 android:groupIndicator="@null"/>
 
-            <TextView
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="20dp"
-                android:text="@string/controller_sectiontitle_interface"
-                android:textColor="@drawable/default_textcolor"/>
 
-
-            <com.smartshoe.connect.ui.utils.ExpandableHeightListView
-                android:id="@+id/interfaceListView"
-                android:layout_width="match_parent"
-                android:layout_height="wrap_content"
-                android:layout_marginTop="10dp"
-                android:divider="#dddddd"
-                android:dividerHeight="1dp"/>
         </LinearLayout>
 
     </ScrollView>

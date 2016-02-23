@@ -51,6 +51,7 @@ import com.google.android.gms.location.places.ui.PlacePicker;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.util.Arrays;
@@ -810,6 +811,8 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                                         mSensorData[i].changed = true;
                                     }
                                 }
+                            }else if(ctype == 'P') { //Pose data
+                                new sendPose().execute(carg.split("\n")[0].trim().replace("-", "N").replace(",","C"));
                             }
                         }else { //Message
                             //Toast.makeText(getApplicationContext(), data, Toast.LENGTH_SHORT).show();
@@ -879,6 +882,19 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
             Log.d(TAG,Float.toString(Float.parseFloat(latLong[0])));
             Log.d(TAG,Float.toString(Float.parseFloat(latLong[1])));
             mSensorData[kSensorType_Directions].changed = true;
+        }
+    }
+    private class sendPose extends AsyncTask<String, Integer, String>
+    {
+
+        @Override
+        protected String doInBackground(String... params) {
+            String url = "http://fridgecow.com/smartshoe/server?p=" + params[0];
+            return getResponseFromUrl(url);
+        }
+        @Override
+        protected void onPostExecute(String response) {
+            Log.d(TAG, response);
         }
     }
 }

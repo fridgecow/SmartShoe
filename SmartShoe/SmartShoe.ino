@@ -21,6 +21,7 @@ int mode = 0; //Default mode (off)
 int activate = 0; //Number of 'heelclicks' registered.
 unsigned long schmittTimer = 0; //Prevents repeated heel clicks.
 unsigned long refreshTimer = 0;
+unsigned long sendingTimer = 0;
 unsigned long bleTimer = 0;
 uint32_t PixelArray[] = {0,0,0,0}; //Caches the current state so that a 'refresh' doesn't always happen
 bool pixelChanged = false; //Have the pixels *actually* been changed.
@@ -258,8 +259,11 @@ void loop() {
       setPixel(p, pixels.Color(255*bitRead(round((float)TIME[1]/(float)5), p), 255*bitRead(TIME[0], p), 0));
     }
   }else if(mode == 4){ //Send pose mode
-    ble.println("!P"+(String)lsm.m.x+","+(String)lsm.m.y+","+(String)lsm.m.z); //!Px,y,z
-    Serial.println("!P"+(String)lsm.m.x+","+(String)lsm.m.y+","+(String)lsm.m.z);
+    if(millis() - sendingTimer > 200){ //Don't pollute the airwaves
+      sendingTimer = millis();
+      ble.println("!P"+(String)lsm.m.x+","+(String)lsm.m.y+","+(String)lsm.m.z); //!Px,y,z
+      Serial.println("!P"+(String)lsm.m.x+","+(String)lsm.m.y+","+(String)lsm.m.z);
+    }
     for(int p = 0; p<4; p++){
       setPixel(p, pixels.Color(0, 0, 0));
     }
