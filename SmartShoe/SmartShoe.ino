@@ -259,10 +259,17 @@ void loop() {
       setPixel(p, pixels.Color(255*bitRead(round((float)TIME[1]/(float)5), p), 255*bitRead(TIME[0], p), 0));
     }
   }else if(mode == 4){ //Send pose mode
-    if(millis() - sendingTimer > 200){ //Don't pollute the airwaves
+    if(millis() - sendingTimer > 500){ //Don't pollute the airwaves
       sendingTimer = millis();
-      ble.println("!P"+(String)lsm.m.x+","+(String)lsm.m.y+","+(String)lsm.m.z); //!Px,y,z
-      Serial.println("!P"+(String)lsm.m.x+","+(String)lsm.m.y+","+(String)lsm.m.z);
+      //Get pitch, roll, yaw
+      double ax = atan( lsm.a.x / (sqrt(square(lsm.a.y) + square(lsm.a.z))));
+      double ay = atan( lsm.a.y / (sqrt(square(lsm.a.x) + square(lsm.a.z))));
+      double az = atan( sqrt(square(lsm.a.x) + square(lsm.a.y)) / lsm.a.z);
+      ble.println("!P"+
+        (String)round(lsm.heading((LSM303::vector<int>){1,0,0})*(100*PI/180.0))+","+
+        (String)round(100*ay)+","+
+        (String)round(100*az)); //!Px,y,z
+      Serial.println("!P");
     }
     for(int p = 0; p<4; p++){
       setPixel(p, pixels.Color(0, 0, 0));
@@ -278,7 +285,7 @@ void loop() {
       for(int p = 0; p < activate; p++){ //Write out
         setPixel(p, pixels.Color(255, 0, 0));
       }
-    }else{ //Active
+    }else if (mode <= MODES){ //Active and not in a "forced" mode
       mode++;
       if(mode > MODES){
         mode = 0;
