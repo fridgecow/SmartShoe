@@ -19,6 +19,7 @@ import android.location.Location;
 import android.os.AsyncTask;
 import android.os.Bundle;
 import android.os.Handler;
+import android.os.Vibrator;
 import android.provider.Settings;
 import android.util.Log;
 import android.view.Menu;
@@ -51,6 +52,8 @@ import com.google.android.gms.location.places.ui.PlacePicker;
 
 import java.io.IOException;
 import java.io.UnsupportedEncodingException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.net.URLEncoder;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
@@ -65,6 +68,8 @@ import org.apache.http.client.ClientProtocolException;
 import org.apache.http.client.methods.HttpPost;
 import org.apache.http.impl.client.DefaultHttpClient;
 import org.apache.http.util.EntityUtils;
+import org.java_websocket.client.WebSocketClient;
+import org.java_websocket.handshake.ServerHandshake;
 
 public class ControllerActivity extends UartInterfaceActivity implements BleManager.BleManagerListener, SensorEventListener, GoogleApiClient.ConnectionCallbacks, GoogleApiClient.OnConnectionFailedListener, LocationListener {
     // Log
@@ -109,6 +114,8 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     private int DirectionStep = 0;
     private boolean forceWaypoint = false;
 
+    private WebSocketClient mWebSocketClient;
+
     @Override
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
@@ -121,6 +128,9 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
         nReceiver = new NotificationReceiver();
         IntentFilter filter = new IntentFilter("com.smartshoe.connect.app.NOTIFICATION_LISTENER_EXAMPLE");
         registerReceiver(nReceiver,filter);
+
+        //WebSockets
+        connectWebSocket();
 
         // UI
         mControllerListView = (ExpandableHeightExpandableListView) findViewById(R.id.controllerListView);
@@ -138,6 +148,9 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 if (position == 0) { //Waypoint Controller
                     Log.d(TAG, "Forcing...");
+                    Vibrator v = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+                    // Vibrate for 500 milliseconds
+                    v.vibrate(500);
                     //forceWaypoint = true;
                     //Intent intent = new Intent(ControllerActivity.this, ColorPickerActivity.class);
                     //startActivityForResult(intent, 0);
@@ -373,29 +386,6 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
     }
 
     private void registerEnabledSensorListeners(boolean register) {
-        /* Not using these - causes out of bounds errors.
-        // Accelerometer
-        if (register && (mSensorData[kSensorType_Accelerometer].enabled || mSensorData[kSensorType_Quaternion].enabled)) {
-            mSensorManager.registerListener(this, mAccelerometer, SensorManager.SENSOR_DELAY_NORMAL);
-        } else {
-            mSensorManager.unregisterListener(this, mAccelerometer);
-        }
-
-        // Gyroscope
-        if (register && mSensorData[kSensorType_Gyroscope].enabled) {
-            mSensorManager.registerListener(this, mGyroscope, SensorManager.SENSOR_DELAY_NORMAL);
-        } else {
-            mSensorManager.unregisterListener(this, mGyroscope);
-        }
-
-        // Magnetometer
-        if (register && (mSensorData[kSensorType_Magnetometer].enabled || mSensorData[kSensorType_Quaternion].enabled)) {
-            mSensorManager.registerListener(this, mMagnetometer, SensorManager.SENSOR_DELAY_NORMAL);
-        } else {
-            mSensorManager.unregisterListener(this, mMagnetometer);
-        }*/
-
-
         // Location
         if (mGoogleApiClient.isConnected()) {
             if (register && mSensorData[kSensorType_Location].enabled) {
@@ -715,10 +705,6 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                 sensorData.enabled = true; //Sensors on by default.
                 mSensorData[i] = sensorData;
             }
-            /*mSensorData[kSensorType_Location].enabled = true; //Enable location by default.
-            mSensorData[kSen].enabled = true; //Enable clock by default.
-            mSensorData[6].enabled = true; //Enable notifications by default.*/
-
         } else {
             // Restore status
             mSensorData = mRetainedDataFragment.mSensorData;
@@ -760,7 +746,7 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
 
                         if(data.charAt(0) == '!' && data.length() > 1) { //Command
                             char ctype = data.charAt(1);
-                            String carg = data.substring(2).trim().toLowerCase();
+                            String carg = data.substring(2).split("\n")[0].trim().toLowerCase();
                             if (ctype == 'N') { //Notification
                                 if(carg.equals("ack")){
                                     mSensorData[kSensorType_Notify].changed = false;
@@ -781,22 +767,27 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                                 if (carg.equals("ack")) {
                                     mSensorData[kSensorType_Directions].changed = false;
                                 }else if(carg.equals("next")){ //Send next direction
-                                    Toast.makeText(getApplicationContext(), "Next leg of the journey!",Toast.LENGTH_SHORT).show();
-                                    DirectionStep++;
-                                    String[] latLong;
-                                    if(DirectionStep < Directions.length) {
-                                        latLong = Directions[DirectionStep].split(",");
-                                    }else{
-                                        latLong = new String[]{"0","0"};
+                                    if(Directions != null) {
+                                        Toast.makeText(getApplicationContext(), "Next leg of the journey!", Toast.LENGTH_SHORT).show();
+                                        Vibrator v = (Vibrator) getApplicationContext().getSystemService(Context.VIBRATOR_SERVICE);
+                                        // Vibrate for 500 millisecond
+                                        v.vibrate(500);
+                                        DirectionStep++;
+                                        String[] latLong;
+                                        if (DirectionStep < Directions.length) {
+                                            latLong = Directions[DirectionStep].split(",");
+                                        } else {
+                                            latLong = new String[]{"0", "0"};
+                                        }
+                                        mSensorData[kSensorType_Directions].values = new float[]{
+                                                Float.parseFloat(latLong[0]),
+                                                Float.parseFloat(latLong[1])
+                                        };
+                                        //Log.d(TAG, Integer.toString(DirectionStep));
+                                        Log.d(TAG, Float.toString(Float.parseFloat(latLong[0])));
+                                        Log.d(TAG, Float.toString(Float.parseFloat(latLong[1])));
+                                        mSensorData[kSensorType_Directions].changed = true;
                                     }
-                                    mSensorData[kSensorType_Directions].values = new float[]{
-                                            Float.parseFloat(latLong[0]),
-                                            Float.parseFloat(latLong[1])
-                                    };
-                                    //Log.d(TAG, Integer.toString(DirectionStep));
-                                    Log.d(TAG,Float.toString(Float.parseFloat(latLong[0])));
-                                    Log.d(TAG,Float.toString(Float.parseFloat(latLong[1])));
-                                    mSensorData[kSensorType_Directions].changed = true;
 
                                 }
                             }else if(ctype == 'R') { //'R'eset, or maybe other system commands in future.
@@ -812,7 +803,11 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
                                     }
                                 }
                             }else if(ctype == 'P') { //Pose data
-                                new sendPose().execute(carg.split("\n")[0].trim().replace("-", "N").replace(",","C"));
+                                try {
+                                    mWebSocketClient.send("!" + carg.split("\n")[0].trim());
+                                }catch(Exception e){
+                                    Toast.makeText(getApplicationContext(), "Cannot send to websocket", Toast.LENGTH_SHORT).show();
+                                }
                             }
                         }else { //Message
                             //Toast.makeText(getApplicationContext(), data, Toast.LENGTH_SHORT).show();
@@ -884,17 +879,45 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
             mSensorData[kSensorType_Directions].changed = true;
         }
     }
-    private class sendPose extends AsyncTask<String, Integer, String>
-    {
 
-        @Override
-        protected String doInBackground(String... params) {
-            String url = "http://fridgecow.com/smartshoe/server?p=" + params[0];
-            return getResponseFromUrl(url);
+    private void connectWebSocket() {
+        URI uri;
+        try {
+            uri = new URI("ws://fridgecow.com:9000/ws");
+        } catch (URISyntaxException e) {
+            e.printStackTrace();
+            return;
         }
-        @Override
-        protected void onPostExecute(String response) {
-            Log.d(TAG, response);
-        }
+
+        mWebSocketClient = new WebSocketClient(uri) {
+            @Override
+            public void onOpen(ServerHandshake serverHandshake) {
+                Log.i("Websocket", "Opened");
+                mWebSocketClient.send("Hello");
+            }
+
+            @Override
+            public void onMessage(String s) {
+                /*final String message = s;
+                runOnUiThread(new Runnable() {
+                    @Override
+                    public void run() {
+                        //Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+                    }
+                });*/
+            }
+
+            @Override
+            public void onClose(int i, String s, boolean b) {
+                Log.i("Websocket", "Closed " + s);
+            }
+
+            @Override
+            public void onError(Exception e) {
+                Log.i("Websocket", "Error " + e.getMessage());
+            }
+        };
+        mWebSocketClient.connect();
     }
+
 }

@@ -129,13 +129,14 @@ int calcBearing(float flat1, float flon1, float flat2, float flon2){
   bear_calc= degrees(calc);
 
   if(bear_calc<=1)
-    bear_calc=360+bear_calc; 
+    bear_calc=360+bear_calc;
 
   return bear_calc;
 }
 float calcBrightness(float head, float angle, int target){
-  float offset = int(abs(head + target))%360; //It's a plus so it's 'flipped' (and tells which direction to turn to)
-  float diff = abs(angle - offset); //Difference between this pixel and our heading
+  float displayAngle = head - target; //It's a plus so it's 'flipped' (and tells which direction to turn to)
+  if (displayAngle < 0){ displayAngle += 360; }
+  float diff = abs(angle - displayAngle); //Difference between this pixel and our desired heading
   
   float brightness = max(0, (float)1.0 - (float)(diff)/(float)90);
  
@@ -246,10 +247,14 @@ void loop() {
       pointDir(head, bearing, 1,0,1);
       
       if(calc_dist(GPS[0], GPS[1], DEST[0], DEST[1]) < 20){ //Within 20 meters of target
+        if(millis() - sendingTimer > 200){ //Don't pollute the airwaves
+          sendingTimer = millis();
           ble.println("!Dnext"); //request next location
-          Serial.println("At destination: ");
-          Serial.println(DEST[0],5);
-          Serial.println(DEST[1],5);          //Issue a white 'flare' on the LEDs
+        }
+        Serial.println("At destination: ");
+        Serial.println(DEST[0],5);
+        Serial.println(DEST[1],5);          
+        //Issue a white 'flare' on the LEDs ?
       }
     }
   }else if(mode == 2){ //Compass functionality
@@ -259,7 +264,7 @@ void loop() {
       setPixel(p, pixels.Color(255*bitRead(round((float)TIME[1]/(float)5), p), 255*bitRead(TIME[0], p), 0));
     }
   }else if(mode == 4){ //Send pose mode
-    if(millis() - sendingTimer > 500){ //Don't pollute the airwaves
+    if(millis() - sendingTimer > 200){ //Don't pollute the airwaves
       sendingTimer = millis();
       //Get pitch, roll, yaw
       double ax = atan( lsm.a.x / (sqrt(square(lsm.a.y) + square(lsm.a.z))));
