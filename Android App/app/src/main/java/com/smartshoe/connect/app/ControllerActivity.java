@@ -898,13 +898,16 @@ public class ControllerActivity extends UartInterfaceActivity implements BleMana
 
             @Override
             public void onMessage(String s) {
-                /*final String message = s;
+                final String message = "N";
                 runOnUiThread(new Runnable() {
                     @Override
                     public void run() {
-                        //Toast.makeText(getApplicationContext(), message, Toast.LENGTH_SHORT).show();
+                        if(message =="N") {
+                            mSensorData[kSensorType_Notify].values = new float[]{1};
+                            mSensorData[kSensorType_Notify].changed = true;
+                        }
                     }
-                });*/
+                });
             }
 
             @Override

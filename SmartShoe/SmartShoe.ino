@@ -218,6 +218,7 @@ void loop() {
       
       ble.println("!Nack");
     }
+    pixels.setPixelColor(3, pixels.Color(0,0,0));
     pixelChanged = true;
     bleIndex = 0;
   }else if(bleString[1] == 'M' && bleIndex == 3){
